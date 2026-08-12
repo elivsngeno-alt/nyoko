@@ -22,27 +22,33 @@ const LanguageHandler = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
 };
 
+const AppShell = () => (
+    <Suspense fallback={<ChunkLoader message={localize('Please wait while we connect to the server...')} />}>
+        <TranslationProvider defaultLang='EN' i18nInstance={i18nInstance}>
+            <LanguageHandler>
+                <StoreProvider>
+                    <LocalStorageSyncWrapper>
+                        <RoutePromptDialog />
+                        <CoreStoreProvider>
+                            <Layout />
+                        </CoreStoreProvider>
+                    </LocalStorageSyncWrapper>
+                </StoreProvider>
+            </LanguageHandler>
+        </TranslationProvider>
+    </Suspense>
+);
+
 const router = createBrowserRouter(
     createRoutesFromElements(
-        <Route
-            path='/'
-            element={
-                <Suspense fallback={<ChunkLoader message={localize('Please wait while we connect to the server...')} />}>
-                    <TranslationProvider defaultLang='EN' i18nInstance={i18nInstance}>
-                        <LanguageHandler>
-                            <StoreProvider>
-                                <LocalStorageSyncWrapper>
-                                    <RoutePromptDialog />
-                                    <CoreStoreProvider><Layout /></CoreStoreProvider>
-                                </LocalStorageSyncWrapper>
-                            </StoreProvider>
-                        </LanguageHandler>
-                    </TranslationProvider>
-                </Suspense>
-            }
-        >
-            <Route index element={<AppRoot />} />
-        </Route>
+        <>
+            <Route path='/' element={<AppShell />}>
+                <Route index element={<AppRoot />} />
+            </Route>
+            <Route path='/callback' element={<AppShell />}>
+                <Route index element={<AppRoot />} />
+            </Route>
+        </>
     )
 );
 
@@ -54,10 +60,10 @@ function App() {
         if (!isProcessing && isValid && params.code) {
             OAuthTokenExchangeService.exchangeCodeForToken(params.code)
                 .then(response => {
-                    if (response.access_token) cleanupURL();
-                    else if (response.error) {
-                        console.error('Token exchange failed:', response.error);
-                        console.error('Error description:', response.error_description);
+                    if (response.access_token) {
+                        cleanupURL();
+                    } else if (response.error) {
+                        console.error('Token exchange failed:', response.error, response.error_description);
                         cleanupURL();
                     }
                 })
