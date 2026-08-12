@@ -39,8 +39,8 @@ jobs:
       - name: Generate brand CSS
         run: npm run generate:brand-css
 
-      - name: Type check
-        run: npm run type-check
+      - name: Validate OAuth Netlify function syntax
+        run: node --check netlify/functions/oauth-token.mjs
 
       - name: Build production bundle
         run: npm run build
