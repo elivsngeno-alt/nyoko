@@ -21,12 +21,12 @@ jobs:
       - name: Clone customized PROD B TRADER source
         run: |
           git clone --depth 1 --branch feature/prodb-premium-ui https://github.com/DukeNyamasege/trading-bot-template.git /tmp/prodb-source
+          rm -rf /tmp/prodb-source/.git
 
       - name: Replace target contents with customized template
         run: |
           find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -a /tmp/prodb-source/. .
-          rm -rf .git
 
       - name: Commit and push to main
         run: |
