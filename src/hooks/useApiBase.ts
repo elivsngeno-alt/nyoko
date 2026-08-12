@@ -12,7 +12,9 @@ import { TAuthData } from '@/types/api-types';
 export const useApiBase = () => {
     const [connectionStatus, setConnectionStatus] = useState<CONNECTION_STATUS>(CONNECTION_STATUS.UNKNOWN);
     const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
-    const [isAuthorizing, setIsAuthorizing] = useState<boolean>(true); // Will be overridden by observable stream which now starts with true
+    // Start unauthenticated. The premium landing page must be visible until the user
+    // explicitly clicks Log in / Sign up or we are processing an OAuth callback.
+    const [isAuthorizing, setIsAuthorizing] = useState<boolean>(false);
     const [accountList, setAccountList] = useState<TAuthData['account_list']>([]);
     const [authData, setAuthData] = useState<TAuthData | null>(null);
     const [activeLoginid, setActiveLoginid] = useState<string>('');
@@ -22,19 +24,21 @@ export const useApiBase = () => {
             setConnectionStatus(status as CONNECTION_STATUS);
         });
 
-        const isAuthorizedSubscription = isAuthorized$.subscribe(isAuthorized => {
-            setIsAuthorized(isAuthorized);
+        const isAuthorizedSubscription = isAuthorized$.subscribe(value => {
+            setIsAuthorized(value);
         });
 
-        const isAuthorizingSubscription = isAuthorizing$.subscribe(isAuthorizing => {
-            setIsAuthorizing(isAuthorizing);
+        const isAuthorizingSubscription = isAuthorizing$.subscribe(value => {
+            setIsAuthorizing(value);
         });
-        const accountListSubscription = account_list$.subscribe(accountList => {
-            setAccountList(accountList);
+
+        const accountListSubscription = account_list$.subscribe(value => {
+            setAccountList(value);
         });
-        const authDataSubscription = authData$.subscribe(authData => {
-            setAuthData(authData);
-            setActiveLoginid(authData?.loginid ?? '');
+
+        const authDataSubscription = authData$.subscribe(value => {
+            setAuthData(value);
+            setActiveLoginid(value?.loginid ?? '');
         });
 
         return () => {
