@@ -22,7 +22,7 @@ interface OTPResponse {
 }
 
 /**
- * Handles the new Deriv Options REST -> OTP -> authenticated WebSocket flow.
+ * Handles the current Deriv Options REST -> OTP -> authenticated WebSocket flow.
  * Every authenticated REST request includes both the OAuth Bearer token and
  * the Deriv-App-ID belonging to the current host's site configuration.
  */
@@ -46,6 +46,17 @@ export class DerivWSAccountsService {
             'Content-Type': 'application/json',
             Accept: 'application/json',
         };
+    }
+
+    private static async readError(response: Response): Promise<string> {
+        const raw = await response.text().catch(() => '');
+        if (!raw) return response.statusText;
+        try {
+            const parsed = JSON.parse(raw);
+            return parsed?.errors?.[0]?.message || parsed?.error_description || parsed?.message || raw;
+        } catch {
+            return raw;
+        }
     }
 
     static clearCache(): void {
@@ -90,8 +101,7 @@ export class DerivWSAccountsService {
                 });
 
                 if (!response.ok) {
-                    const detail = await response.text().catch(() => '');
-                    throw new Error(`Failed to fetch Deriv accounts (${response.status}): ${detail || response.statusText}`);
+                    throw new Error(`Failed to fetch Deriv accounts (${response.status}): ${await this.readError(response)}`);
                 }
 
                 const data: AccountsResponse = await response.json();
@@ -112,6 +122,32 @@ export class DerivWSAccountsService {
         return this.accountsFetchPromise;
     }
 
+    static async refreshAccounts(accessToken: string): Promise<DerivAccount[]> {
+        this.clearCache();
+        return this.fetchAccountsList(accessToken);
+    }
+
+    static async resetDemoBalance(accessToken: string, accountId: string): Promise<DerivAccount[]> {
+        const storedAccount = this.getStoredAccounts()?.find(account => account.account_id === accountId);
+        if (storedAccount && storedAccount.account_type !== 'demo') {
+            throw new Error('Only a Deriv demo Options account can be reset.');
+        }
+
+        const baseURL = this.getDerivWSBaseURL();
+        const optionsDir = brandConfig.platform.derivws.directories.options;
+        const endpoint = `${baseURL}${optionsDir}accounts/${encodeURIComponent(accountId)}/reset-demo-balance`;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: this.getHeaders(accessToken),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to reset demo balance (${response.status}): ${await this.readError(response)}`);
+        }
+
+        return this.refreshAccounts(accessToken);
+    }
+
     static async fetchOTPWebSocketURL(accessToken: string, accountId: string): Promise<string> {
         const cacheKey = accountId;
         const cached = this.otpFetchPromises.get(cacheKey);
@@ -129,8 +165,7 @@ export class DerivWSAccountsService {
                 });
 
                 if (!response.ok) {
-                    const detail = await response.text().catch(() => '');
-                    throw new Error(`Failed to fetch WebSocket OTP (${response.status}): ${detail || response.statusText}`);
+                    throw new Error(`Failed to fetch WebSocket OTP (${response.status}): ${await this.readError(response)}`);
                 }
 
                 const otpResponse: OTPResponse = await response.json();
