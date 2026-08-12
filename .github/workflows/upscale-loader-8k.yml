@@ -30,9 +30,10 @@ jobs:
       - name: Create 8K UHD loader asset
         run: |
           python - <<'PY'
-          from PIL import Image, ImageFilter, ImageEnhance, ImageOps
+          from PIL import Image, ImageFile, ImageFilter, ImageEnhance, ImageOps
           from pathlib import Path
 
+          ImageFile.LOAD_TRUNCATED_IMAGES = True
           path = Path('src/assets/prodb-premium/auth-loader-bg.jpg')
           image = Image.open(path).convert('RGB')
           image = ImageOps.fit(image, (7680, 4320), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
