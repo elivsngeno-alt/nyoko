@@ -1,1 +1,17 @@
-export type PremiumSection = 'dashboard' | 'bot_builder' | 'free_bots' | 'bulk_trader' | 'manual_trader' | 'copy_trading' | 'charts' | 'analysis_tools';
+export type PremiumSection =
+    | 'dashboard'
+    | 'bot_ideas'
+    | 'quick_bot'
+    | 'bot_builder'
+    | 'free_bots'
+    | 'signal_ai'
+    | 'auto_trader'
+    | 'manual_trading'
+    | 'bulk_trader'
+    | 'copy_trading'
+    | 'speedbot'
+    | 'pro_ai'
+    | 'analysis_tools'
+    | 'analysis_hub'
+    | 'charts'
+    | 'dtrader';
