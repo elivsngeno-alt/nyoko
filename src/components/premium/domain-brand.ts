@@ -8,11 +8,17 @@ const cleanDomain = (value: string) =>
         .replace(/\/.*$/, '')
         .replace(/:\d+$/, '');
 
+/**
+ * Visible branding always follows the host the trader is actually visiting.
+ * Site configuration is only a server/SSR fallback; it must never make one
+ * hosted domain display another site's marketing name.
+ */
 export const getTemplateDomain = () => {
-    const configured = resolveSiteConfig();
     const browserHost = typeof window !== 'undefined' ? window.location.hostname : '';
-    const value = configured?.display_domain || browserHost || 'trading.site';
-    return cleanDomain(value);
+    if (browserHost) return cleanDomain(browserHost);
+
+    const configured = resolveSiteConfig();
+    return cleanDomain(configured?.display_domain || 'trading.site');
 };
 
 export const getDomainAbbreviation = (domain = getTemplateDomain()) => {
