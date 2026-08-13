@@ -7,9 +7,16 @@ const BrandMark = ({ dark = false }: { dark?: boolean }) => {
     const abbreviation = getDomainAbbreviation(domain);
 
     useEffect(() => {
-        document.title = domain;
-        document.documentElement.style.setProperty('--template-domain', `"${domain}"`);
-        return () => document.documentElement.style.removeProperty('--template-domain');
+        const apply = () => {
+            document.title = domain;
+            document.documentElement.style.setProperty('--template-domain', `"${domain}"`);
+        };
+        apply();
+        const timer = window.setTimeout(apply, 0);
+        return () => {
+            window.clearTimeout(timer);
+            document.documentElement.style.removeProperty('--template-domain');
+        };
     }, [domain]);
 
     return (
