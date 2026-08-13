@@ -98,6 +98,15 @@
     font-size: 6.5px;
 }
 
+.prodb-help-panel__welcome h2 {
+    font-size: 0;
+}
+
+.prodb-help-panel__welcome h2::after {
+    content: 'Welcome to ' var(--template-domain, 'website');
+    font-size: 18px;
+}
+
 /* Login/callback screen: current domain on top of a powerful neural-brain background. */
 .prodb-loader {
     background:
