@@ -1,37 +1,49 @@
 import { useEffect, useState } from 'react';
+import { load, save_types } from '@/external/bot-skeleton';
 import { PremiumDerivApiService } from '@/services/premium-deriv-api.service';
 import { DownloadIcon } from '../icons';
-import { ImportedBestBotsSource, loadSourceBot } from './ImportedFeaturePages';
+import { ImportedBestBotsSource } from './ImportedFeaturePages';
 
 const bots = [
-    ['NOVA PRIME','Dstrike 2','Nova Prime strategies — signal-ready over/under recovery bots.'],
-    ['NOVA PRIME','Magic Recovery','Nova Prime strategies — signal-ready over/under recovery bots.'],
-    ['NOVA PRIME','NOVAGRID 2026','Nova Prime strategies — signal-ready over/under recovery bots.'],
-    ['NOVA PRIME','Over 2 Rec Over 4','Nova Prime strategies — signal-ready over/under recovery bots.'],
-    ['NOVA PRIME','UNDER 7 UNDER 5','Nova Prime strategies — signal-ready over/under recovery bots.'],
-    ['NOVA PRIME','UNDER 8 UNDER 6','Nova Prime strategies — signal-ready over/under recovery bots.'],
-    ['WIZARD','Autovolt 5 Probot 1','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Derivwizard 1','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Derivwizard 2','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Dollarflipper','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Dollarminer','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Even Odd Auto Switcher','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Rise Fallswitcher Bot','Wizard strategies — contract switching and stake automation.'],
-    ['WIZARD','Underver Autoswitch','Wizard strategies — contract switching and stake automation.'],
-    ['ARENA','Babaking 2','Arena bots — speed and auto-switch trading setups.'],
-    ['ARENA','Enhanced Auto Switch Over 2 Bot','Arena bots — speed and auto-switch trading setups.'],
-    ['ARENA','H1Tn RUNPRO','Arena bots — speed and auto-switch trading setups.'],
-    ['ARENA','Hu Rm YAUTOBo TBYHURMYFXKE','Arena bots — speed and auto-switch trading setups.'],
-    ['ARENA','Hu Rm YSPEEDBOTPROV 2','Arena bots — speed and auto-switch trading setups.'],
-    ['ARENA','M 27 Auto Switchbot 2024','Arena bots — speed and auto-switch trading setups.'],
-    ['ARENA','MIKethe G','Arena bots — speed and auto-switch trading setups.'],
+    ['NOVA PRIME', 'Dstrike 2', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
+    ['NOVA PRIME', 'Magic Recovery', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
+    ['NOVA PRIME', 'NOVAGRID 2026', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
+    ['NOVA PRIME', 'Over 2 Rec Over 4', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
+    ['NOVA PRIME', 'UNDER 7 UNDER 5', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
+    ['NOVA PRIME', 'UNDER 8 UNDER 6', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
+    ['WIZARD', 'Autovolt 5 Probot 1', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Derivwizard 1', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Derivwizard 2', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Dollarflipper', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Dollarminer', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Even Odd Auto Switcher', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Rise Fallswitcher Bot', 'Wizard strategies — contract switching and stake automation.'],
+    ['WIZARD', 'Underver Autoswitch', 'Wizard strategies — contract switching and stake automation.'],
+    ['ARENA', 'Babaking 2', 'Arena bots — speed and auto-switch trading setups.'],
+    ['ARENA', 'Enhanced Auto Switch Over 2 Bot', 'Arena bots — speed and auto-switch trading setups.'],
+    ['ARENA', 'H1Tn RUNPRO', 'Arena bots — speed and auto-switch trading setups.'],
+    ['ARENA', 'Hu Rm YAUTOBo TBYHURMYFXKE', 'Arena bots — speed and auto-switch trading setups.'],
+    ['ARENA', 'Hu Rm YSPEEDBOTPROV 2', 'Arena bots — speed and auto-switch trading setups.'],
+    ['ARENA', 'M 27 Auto Switchbot 2024', 'Arena bots — speed and auto-switch trading setups.'],
+    ['ARENA', 'MIKethe G', 'Arena bots — speed and auto-switch trading setups.'],
 ];
 
 const collectArray = (value: any): any[] => {
     if (Array.isArray(value)) return value;
     if (!value || typeof value !== 'object') return [];
-    for (const candidate of [value.strategies, value.runs, value.items, value.data, value.list]) if (Array.isArray(candidate)) return candidate;
+    for (const candidate of [value.strategies, value.runs, value.items, value.data, value.list]) {
+        if (Array.isArray(candidate)) return candidate;
+    }
     return [];
+};
+
+const waitForWorkspace = async () => {
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+        const workspace = window.Blockly?.derivWorkspace;
+        if (workspace) return workspace;
+        await new Promise(resolve => window.setTimeout(resolve, 100));
+    }
+    throw new Error('Bot Builder workspace is not ready. Open Bot Builder and try again.');
 };
 
 const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
@@ -42,7 +54,8 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     const [error, setError] = useState('');
 
     const refreshAutomation = async () => {
-        setBusy(true); setError('');
+        setBusy(true);
+        setError('');
         const [strategyResult, runResult] = await Promise.allSettled([
             PremiumDerivApiService.autoListStrategies(),
             PremiumDerivApiService.autoList(),
@@ -58,10 +71,30 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
 
     const loadImportedBot = async (file: string) => {
         if (!openBotBuilder) return;
-        setSourceBusy(file); setError('');
-        try { await loadSourceBot(file, openBotBuilder); }
-        catch (err) { setError(err instanceof Error ? err.message : String(err)); }
-        finally { setSourceBusy(''); }
+        setSourceBusy(file);
+        setError('');
+        try {
+            const source = `https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site/${encodeURIComponent(file)}`;
+            const response = await fetch(source);
+            if (!response.ok) throw new Error(`Could not fetch ${file} from the source library (HTTP ${response.status}).`);
+            const xml = await response.text();
+            if (!xml.includes('<xml') && !xml.includes('<block')) throw new Error(`${file} did not contain a valid Blockly XML document.`);
+            openBotBuilder();
+            const workspace = await waitForWorkspace();
+            await load({
+                block_string: xml,
+                file_name: file,
+                workspace,
+                from: save_types.LOCAL,
+                drop_event: {},
+                strategy_id: null,
+                showIncompatibleStrategyDialog: false,
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setSourceBusy('');
+        }
     };
 
     return <div className='prodb-free-bots'>
@@ -74,7 +107,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         {strategies.length > 0 && <div className='prodb-auto-strategies'>{strategies.slice(0, 12).map((strategy, index) => <span key={strategy.strategy_id || strategy.id || index}>{strategy.name || strategy.display_name || strategy.strategy_id || strategy.id || `Strategy ${index + 1}`}</span>)}</div>}
         {error && <div className='prodb-live-error'>{error}</div>}
 
-        <div className='prodb-imported-bots-title'><div><span>IMPORTED FROM NEW-USER-INTERFACE</span><h2>Risk Managers bot library</h2><p>The Best Bots page has been merged into this new design. Source XML files are loaded into the existing Bot Builder instead of opening the old UI.</p></div></div>
+        <div className='prodb-imported-bots-title'><div><span>IMPORTED FROM NEW-USER-INTERFACE</span><h2>Risk Managers bot library</h2><p>The Best Bots page is merged into this design. Its verified source XML files load directly into the existing Bot Builder.</p></div></div>
         <div className='prodb-bot-grid prodb-bot-grid--imported'>
             {ImportedBestBotsSource.map(bot => <article className='prodb-bot-card prodb-bot-card--imported' key={bot.file}>
                 <div className='prodb-bot-card__top'><button>☆</button><span>{bot.tag}</span></div><small>SOURCE BOT</small><h2>{bot.title}</h2><p><i>★</i> {bot.description}</p>
@@ -84,7 +117,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
 
         <div className='prodb-imported-bots-title prodb-imported-bots-title--current'><div><span>PROD B LIBRARY</span><h2>Current premium bot collection</h2></div></div>
         <div className='prodb-bot-grid'>
-            {bots.map(([tag,title,description]) => <article className='prodb-bot-card' key={`${tag}-${title}`}>
+            {bots.map(([tag, title, description]) => <article className='prodb-bot-card' key={`${tag}-${title}`}>
                 <div className='prodb-bot-card__top'><button>☆</button><span>{tag}</span></div><small>FREE BOT</small><h2>{title}</h2><p><i>★</i> {description}</p>
                 <button className='prodb-load-bot' onClick={openBotBuilder}>LOAD IN BOT BUILDER <DownloadIcon /></button>
             </article>)}
