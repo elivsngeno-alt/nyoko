@@ -135,10 +135,11 @@ const PremiumLayout = observer(() => {
         }
     };
 
-    return <div className={`prodb-premium-shell ${section === 'bot_builder' ? 'prodb-premium-shell--builder' : ''}`}>
+    const isBotBuilder = section === 'bot_builder';
+    return <div className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''}`}>
         <PremiumHeader active={section} onChange={changeSection} />
         <main className='prodb-premium-content'>{renderSection()}</main>
-        {section !== 'bot_builder' && <BottomStatusBar />}
+        <BottomStatusBar botBuilderActive={isBotBuilder} />
     </div>;
 });
 
