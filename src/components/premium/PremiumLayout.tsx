@@ -13,14 +13,29 @@ import PremiumLoader from './PremiumLoader';
 import BulkTraderPage from './pages/BulkTraderPage';
 import DashboardHome from './pages/DashboardHome';
 import FreeBotsPage from './pages/FreeBotsPage';
-import { AnalysisToolsPage, ChartsPage, CopyTradingPage, ManualTraderPage } from './pages/LiveTradingPages';
+import {
+    AdvancedManualTradingPage,
+    AutoTraderPage,
+    BotIdeasPage,
+    DTraderPage,
+    ProAIPage,
+    QuickBotPage,
+    SignalAIPage,
+    SourceAnalysisToolsPage,
+    SpeedbotPage,
+} from './pages/ImportedFeaturePages';
+import { AnalysisToolsPage, ChartsPage, CopyTradingPage } from './pages/LiveTradingPages';
 import type { PremiumSection } from './types';
 import './premium-base.scss';
 import './premium-app.scss';
 import './premium-live.scss';
+import './premium-imported.scss';
+import './premium-imported-library.scss';
 
 const validSections: PremiumSection[] = [
-    'dashboard', 'bot_builder', 'free_bots', 'bulk_trader', 'manual_trader', 'copy_trading', 'charts', 'analysis_tools',
+    'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
+    'manual_trading', 'bulk_trader', 'copy_trading', 'speedbot', 'pro_ai', 'analysis_tools',
+    'analysis_hub', 'charts', 'dtrader',
 ];
 
 const readSection = (): PremiumSection => {
@@ -82,16 +97,25 @@ const PremiumLayout = observer(() => {
     if (!isAuthenticated && (isOAuthCallback || isAuthorizing)) return <PremiumLoader />;
     if (!isAuthenticated) return <LandingPage onLogin={() => startOAuth()} onSignup={() => startOAuth('registration')} busy={isAuthorizing} />;
 
+    const openBotBuilder = () => changeSection('bot_builder');
     const renderSection = () => {
         switch (section) {
-            case 'dashboard': return <DashboardHome openBotBuilder={() => changeSection('bot_builder')} openSection={changeSection} />;
+            case 'dashboard': return <DashboardHome openBotBuilder={openBotBuilder} openSection={changeSection} />;
+            case 'bot_ideas': return <BotIdeasPage openBotBuilder={openBotBuilder} />;
+            case 'quick_bot': return <QuickBotPage openBotBuilder={openBotBuilder} openSection={changeSection} />;
             case 'bot_builder': return <div className='prodb-bot-builder-host'><Outlet /></div>;
-            case 'free_bots': return <FreeBotsPage openBotBuilder={() => changeSection('bot_builder')} />;
+            case 'free_bots': return <FreeBotsPage openBotBuilder={openBotBuilder} />;
+            case 'signal_ai': return <SignalAIPage />;
+            case 'auto_trader': return <AutoTraderPage />;
+            case 'manual_trading': return <AdvancedManualTradingPage />;
             case 'bulk_trader': return <BulkTraderPage />;
-            case 'manual_trader': return <ManualTraderPage />;
             case 'copy_trading': return <CopyTradingPage />;
-            case 'charts': return <ChartsPage />;
+            case 'speedbot': return <SpeedbotPage />;
+            case 'pro_ai': return <ProAIPage />;
             case 'analysis_tools': return <AnalysisToolsPage />;
+            case 'analysis_hub': return <SourceAnalysisToolsPage />;
+            case 'charts': return <ChartsPage />;
+            case 'dtrader': return <DTraderPage />;
             default: return null;
         }
     };
