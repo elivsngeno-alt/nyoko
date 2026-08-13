@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { load, save_types } from '@/external/bot-skeleton';
 import { PremiumDerivApiService } from '@/services/premium-deriv-api.service';
 import { DownloadIcon } from '../icons';
-import { ImportedBestBotsSource } from './ImportedFeaturePages';
+
+const sourceBots = [
+    { tag: 'PREMIUM', title: 'New Under 8 Special Bot 2026', file: 'New under 8 special bot 2026.xml', description: 'Adaptive Under 8 strategy with protected profit/loss controls.' },
+    { tag: 'VIP', title: 'Double Under bot', file: 'Double Under bot.xml', guide: 'Mighty_Double_Under_Bot_Quick_Guide.pdf', description: 'Editable Over/Under direction with two-tick direction confirmation.' },
+    { tag: 'RISK MANAGERS', title: 'D10 BY mrduke', file: 'D10 BY mrduke.xml', description: 'Alternates Even/Odd, Over4/Under5 and Rise/Fall with switch-count, martingale and TP/SL controls.' },
+    { tag: 'RISK MANAGERS', title: 'Percentage Over by Mr Duke', file: 'Percentage Over by Mr Duke.xml', description: 'Percentage-driven digit-over setup from the source bot library.' },
+    { tag: 'RISK MANAGERS', title: 'grffy v1', file: 'grffy v1.xml', description: 'Original Risk Managers source strategy, preserved for loading in the current Bot Builder.' },
+    { tag: 'RISK MANAGERS', title: 'Mr Duke Speed Bot.1', file: 'Mr Duke Speed Bot.1.xml', description: 'Fast execution bot from the source library.' },
+    { tag: 'RISK MANAGERS', title: 'Wealth Generator', file: 'Wealth Generator.xml', description: 'Source strategy packaged for direct Bot Builder loading.' },
+];
 
 const bots = [
     ['NOVA PRIME', 'Dstrike 2', 'Nova Prime strategies — signal-ready over/under recovery bots.'],
@@ -27,6 +36,8 @@ const bots = [
     ['ARENA', 'M 27 Auto Switchbot 2024', 'Arena bots — speed and auto-switch trading setups.'],
     ['ARENA', 'MIKethe G', 'Arena bots — speed and auto-switch trading setups.'],
 ];
+
+const SOURCE_ROOT = 'https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site';
 
 const collectArray = (value: any): any[] => {
     if (Array.isArray(value)) return value;
@@ -74,8 +85,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         setSourceBusy(file);
         setError('');
         try {
-            const source = `https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site/${encodeURIComponent(file)}`;
-            const response = await fetch(source);
+            const response = await fetch(`${SOURCE_ROOT}/${encodeURIComponent(file)}`);
             if (!response.ok) throw new Error(`Could not fetch ${file} from the source library (HTTP ${response.status}).`);
             const xml = await response.text();
             if (!xml.includes('<xml') && !xml.includes('<block')) throw new Error(`${file} did not contain a valid Blockly XML document.`);
@@ -107,10 +117,11 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         {strategies.length > 0 && <div className='prodb-auto-strategies'>{strategies.slice(0, 12).map((strategy, index) => <span key={strategy.strategy_id || strategy.id || index}>{strategy.name || strategy.display_name || strategy.strategy_id || strategy.id || `Strategy ${index + 1}`}</span>)}</div>}
         {error && <div className='prodb-live-error'>{error}</div>}
 
-        <div className='prodb-imported-bots-title'><div><span>IMPORTED FROM NEW-USER-INTERFACE</span><h2>Risk Managers bot library</h2><p>The Best Bots page is merged into this design. Its verified source XML files load directly into the existing Bot Builder.</p></div></div>
+        <div className='prodb-imported-bots-title'><div><span>IMPORTED FROM NEW-USER-INTERFACE</span><h2>Risk Managers bot library</h2><p>All seven entries from the source Risk Managers manifest are represented here. Their XML files load into the current premium Bot Builder.</p></div></div>
         <div className='prodb-bot-grid prodb-bot-grid--imported'>
-            {ImportedBestBotsSource.map(bot => <article className='prodb-bot-card prodb-bot-card--imported' key={bot.file}>
+            {sourceBots.map(bot => <article className='prodb-bot-card prodb-bot-card--imported' key={bot.file}>
                 <div className='prodb-bot-card__top'><button>☆</button><span>{bot.tag}</span></div><small>SOURCE BOT</small><h2>{bot.title}</h2><p><i>★</i> {bot.description}</p>
+                {bot.guide && <a className='prodb-source-guide' href={`${SOURCE_ROOT}/${encodeURIComponent(bot.guide)}`} target='_blank' rel='noreferrer'>QUICK GUIDE</a>}
                 <button className='prodb-load-bot' disabled={Boolean(sourceBusy)} onClick={() => loadImportedBot(bot.file)}>{sourceBusy === bot.file ? 'LOADING…' : 'LOAD BOT'} <DownloadIcon /></button>
             </article>)}
         </div>
