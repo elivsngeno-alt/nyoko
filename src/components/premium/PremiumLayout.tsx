@@ -30,6 +30,7 @@ import './premium-base.scss';
 import './premium-app.scss';
 import './premium-live.scss';
 import './premium-imported.scss';
+import './premium-imported-library.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
