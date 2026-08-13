@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PremiumDerivApiService } from '@/services/premium-deriv-api.service';
 import { DownloadIcon } from '../icons';
+import { ImportedBestBotsSource, loadSourceBot } from './ImportedFeaturePages';
 
 const bots = [
     ['NOVA PRIME','Dstrike 2','Nova Prime strategies — signal-ready over/under recovery bots.'],
@@ -37,6 +38,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     const [strategies, setStrategies] = useState<any[]>([]);
     const [runs, setRuns] = useState<any[]>([]);
     const [busy, setBusy] = useState(false);
+    const [sourceBusy, setSourceBusy] = useState('');
     const [error, setError] = useState('');
 
     const refreshAutomation = async () => {
@@ -54,6 +56,14 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
 
     useEffect(() => { void refreshAutomation(); }, []);
 
+    const loadImportedBot = async (file: string) => {
+        if (!openBotBuilder) return;
+        setSourceBusy(file); setError('');
+        try { await loadSourceBot(file, openBotBuilder); }
+        catch (err) { setError(err instanceof Error ? err.message : String(err)); }
+        finally { setSourceBusy(''); }
+    };
+
     return <div className='prodb-free-bots'>
         <section className='prodb-auto-engine'>
             <div><span>DERIV AUTO API</span><h2>Automation engine</h2><p>Strategies and active automated runs are read from the authenticated Deriv WebSocket session.</p></div>
@@ -63,6 +73,16 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         </section>
         {strategies.length > 0 && <div className='prodb-auto-strategies'>{strategies.slice(0, 12).map((strategy, index) => <span key={strategy.strategy_id || strategy.id || index}>{strategy.name || strategy.display_name || strategy.strategy_id || strategy.id || `Strategy ${index + 1}`}</span>)}</div>}
         {error && <div className='prodb-live-error'>{error}</div>}
+
+        <div className='prodb-imported-bots-title'><div><span>IMPORTED FROM NEW-USER-INTERFACE</span><h2>Risk Managers bot library</h2><p>The Best Bots page has been merged into this new design. Source XML files are loaded into the existing Bot Builder instead of opening the old UI.</p></div></div>
+        <div className='prodb-bot-grid prodb-bot-grid--imported'>
+            {ImportedBestBotsSource.map(bot => <article className='prodb-bot-card prodb-bot-card--imported' key={bot.file}>
+                <div className='prodb-bot-card__top'><button>☆</button><span>{bot.tag}</span></div><small>SOURCE BOT</small><h2>{bot.title}</h2><p><i>★</i> {bot.description}</p>
+                <button className='prodb-load-bot' disabled={Boolean(sourceBusy)} onClick={() => loadImportedBot(bot.file)}>{sourceBusy === bot.file ? 'LOADING…' : 'LOAD BOT'} <DownloadIcon /></button>
+            </article>)}
+        </div>
+
+        <div className='prodb-imported-bots-title prodb-imported-bots-title--current'><div><span>PROD B LIBRARY</span><h2>Current premium bot collection</h2></div></div>
         <div className='prodb-bot-grid'>
             {bots.map(([tag,title,description]) => <article className='prodb-bot-card' key={`${tag}-${title}`}>
                 <div className='prodb-bot-card__top'><button>☆</button><span>{tag}</span></div><small>FREE BOT</small><h2>{title}</h2><p><i>★</i> {description}</p>
