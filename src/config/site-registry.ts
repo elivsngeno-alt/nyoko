@@ -2,6 +2,12 @@ import brandConfig from '../../brand.config.json';
 
 export type SiteEnvironment = 'production' | 'staging';
 
+export interface SiteBotLibraryConfig {
+    title?: string;
+    manifest_url?: string;
+    base_url?: string;
+}
+
 export interface SiteOAuthConfig {
     id: string;
     hosts: string[];
@@ -12,6 +18,7 @@ export interface SiteOAuthConfig {
     scopes: string[];
     environment: SiteEnvironment;
     legacy_app_id?: string;
+    bot_library?: SiteBotLibraryConfig;
 }
 
 interface MultiSiteConfig {
@@ -50,9 +57,8 @@ export const resolveSiteConfig = (hostname?: string): SiteOAuthConfig | undefine
 };
 
 /**
- * Safe display fallback. This may return the configured default site on an unknown host.
- * Authentication code must use requireCurrentSiteConfig() instead so a wrong client_id
- * can never be sent for an unregistered domain.
+ * Safe configuration fallback. Visible branding should use the actual browser
+ * hostname; this object is for API/client configuration only.
  */
 export const getCurrentSiteConfig = (): SiteOAuthConfig => resolveSiteConfig() ?? getDefaultSiteConfig();
 

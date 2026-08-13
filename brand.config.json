@@ -1,23 +1,28 @@
 {
-    "brand_name": "PROD B TRADER",
-    "brand_domain": "prodbtrader.site",
+    "brand_name": "Trading Template",
+    "brand_domain": "newtemplate12.netlify.app",
     "brand_hostname": {
-        "staging": "staging.prodbtrader.site",
-        "production": "prodbtrader.site"
+        "staging": "newtemplate12.netlify.app",
+        "production": "newtemplate12.netlify.app"
     },
-    "domain_name": "prodbtrader.site",
+    "domain_name": "newtemplate12.netlify.app",
     "sites": {
         "default_site": "prodb-newtemplate12",
         "entries": [
             {
                 "id": "prodb-newtemplate12",
                 "hosts": ["newtemplate12.netlify.app"],
-                "display_domain": "www.prodbtrader.site",
+                "display_domain": "newtemplate12.netlify.app",
                 "website_url": "https://newtemplate12.netlify.app",
                 "redirect_uri": "https://newtemplate12.netlify.app/callback",
                 "client_id": "34675xfHsqnpagJ0dHq28",
                 "scopes": ["trade", "application_read"],
-                "environment": "production"
+                "environment": "production",
+                "bot_library": {
+                    "title": "Free Bots",
+                    "manifest_url": "https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site/bots.json",
+                    "base_url": "https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site"
+                }
             }
         ]
     },
@@ -73,14 +78,14 @@
         "css_variable_prefix": "--brand"
     },
     "platform": {
-        "name": "PROD B TRADER",
+        "name": "Trading Template",
         "logo": {
             "type": "component",
             "component_name": "BrandLogo",
-            "alt_text": "PROD B TRADER",
+            "alt_text": "Trading Template",
             "link_url": "/",
             "show_text": true,
-            "text": "PROD B TRADER"
+            "text": "Trading Template"
         },
         "footer": {
             "enable_language_settings": false,
@@ -88,10 +93,10 @@
         },
         "hostname": {
             "production": {
-                "com": "prodbtrader.site"
+                "com": "newtemplate12.netlify.app"
             },
             "staging": {
-                "com": "staging.prodbtrader.site"
+                "com": "newtemplate12.netlify.app"
             }
         },
         "auth2_url": {
