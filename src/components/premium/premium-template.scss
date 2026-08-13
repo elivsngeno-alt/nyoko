@@ -94,7 +94,6 @@
 }
 .prodb-loader__content p { color: #b8c7d9; }
 
-/* Dashboard starts at the right edge: Dashboard is the right-most item, then the remaining five move left. */
 .prodb-nav {
     justify-content: flex-start;
     flex-direction: row-reverse;
@@ -107,9 +106,8 @@
     justify-content: center;
 }
 
-/* The native Deriv Bot workspace owns its Run/Stop control and right-side Run Panel. */
 .prodb-premium-shell--builder .prodb-premium-content {
-    height: calc(100vh - 55px - 47px - 24px);
+    height: calc(100vh - 55px - 47px - 24px - 39px);
     overflow: hidden;
 }
 .prodb-bot-builder-host,
@@ -128,6 +126,9 @@
     top: 0;
     z-index: 95;
 }
+.prodb-bot-builder-host .main__run-strategy-wrapper > .toolbar__section {
+    display: none;
+}
 .prodb-bot-builder-host .run-panel__container {
     z-index: 94;
 }
@@ -137,7 +138,6 @@
     margin-inline: auto;
 }
 
-/* Bulk Trader result cards change labels with the selected digit family. */
 .prodb-trade-pair {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -161,6 +161,9 @@
 .prodb-trade-pair > div:last-child { background: #ef4e43; }
 .prodb-trade-pair strong { font-size: 13px; }
 .prodb-trade-pair small { font-size: 8px; opacity: .88; }
+
+.prodb-run:disabled { cursor: default; opacity: .82; }
+.prodb-run.is-enabled { cursor: pointer; opacity: 1; }
 
 @media (max-width: 900px) {
     .prodb-dashboard-page { display: block; overflow: auto; }
@@ -197,7 +200,7 @@
     .prodb-ai-scanner { top: 27px; }
 
     .prodb-premium-shell--builder .prodb-premium-content {
-        height: calc(100vh - 55px - 47px - 24px);
+        height: calc(100vh - 55px - 47px - 24px - 39px);
         overflow: hidden;
     }
     .prodb-bot-builder-host .main__run-strategy-wrapper { inset-inline-end: 0; }
