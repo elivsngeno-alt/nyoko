@@ -1,8 +1,16 @@
+import { useEffect } from 'react';
 import { getDomainAbbreviation, getTemplateDomain } from './domain-brand';
+import './premium-template.scss';
 
 const BrandMark = ({ dark = false }: { dark?: boolean }) => {
     const domain = getTemplateDomain();
     const abbreviation = getDomainAbbreviation(domain);
+
+    useEffect(() => {
+        document.title = domain;
+        document.documentElement.style.setProperty('--template-domain', `"${domain}"`);
+        return () => document.documentElement.style.removeProperty('--template-domain');
+    }, [domain]);
 
     return (
         <div className={`prodb-brand ${dark ? 'prodb-brand--dark' : ''}`} aria-label={domain}>
