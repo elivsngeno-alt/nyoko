@@ -42,6 +42,7 @@ import './premium-native-bot-builder.scss';
 import './premium-account.scss';
 import './premium-global-trading.scss';
 import './premium-mobile-shell.scss';
+import './premium-run-panel-right.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
