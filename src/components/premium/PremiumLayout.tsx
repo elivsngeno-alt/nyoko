@@ -9,9 +9,12 @@ import { useStore } from '@/hooks/useStore';
 import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.service';
 import BottomStatusBar from './BottomStatusBar';
 import { getTemplateDomain } from './domain-brand';
+import GlobalContractBridge from './GlobalContractBridge';
+import GlobalQuickTrade from './GlobalQuickTrade';
 import LandingPage from './LandingPage';
 import PremiumHeader from './PremiumHeader';
 import PremiumLoader from './PremiumLoader';
+import AnalysisToolsPage from './pages/AnalysisToolsPage';
 import BulkTraderPage from './pages/BulkTraderPage';
 import DashboardHome from './pages/DashboardHome';
 import FreeBotsPage from './pages/FreeBotsPage';
@@ -26,7 +29,7 @@ import {
     SourceAnalysisToolsPage,
     SpeedbotPage,
 } from './pages/ImportedFeaturePages';
-import { AnalysisToolsPage, ChartsPage } from './pages/LiveTradingPages';
+import { ChartsPage } from './pages/LiveTradingPages';
 import PatCopyTradingPage from './pages/PatCopyTradingPage';
 import type { PremiumSection } from './types';
 import './premium-base.scss';
@@ -37,6 +40,7 @@ import './premium-imported-library.scss';
 import './premium-token-panel.scss';
 import './premium-native-bot-builder.scss';
 import './premium-account.scss';
+import './premium-global-trading.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
@@ -93,9 +97,8 @@ const PremiumLayout = observer(() => {
     useEffect(() => {
         if (!isAuthenticated || section !== 'bot_builder') return;
 
-        // AppContent mounts Deriv's native <Main /> and <BotBuilder /> together.
-        // Keep the official internal tab pinned to Bot Builder even after Main's
-        // initial hash-reading effect runs, and keep the native Run Panel open.
+        // AppContent remains mounted even while another premium section is visible.
+        // Pin the native tab to Bot Builder only when that section is opened.
         activateNativeBotBuilder();
         const frame = window.requestAnimationFrame(activateNativeBotBuilder);
         const retry = window.setTimeout(activateNativeBotBuilder, 120);
@@ -122,10 +125,6 @@ const PremiumLayout = observer(() => {
 
     const changeSection = useCallback((next: PremiumSection) => {
         setSection(next);
-
-        // Use React Router navigation instead of history.replaceState. Deriv's
-        // native Main component reads useLocation().hash to select BOT_BUILDER;
-        // bypassing React Router left it on Dashboard and hid the Blockly workspace.
         navigate(
             {
                 pathname: location.pathname,
@@ -147,7 +146,7 @@ const PremiumLayout = observer(() => {
             case 'dashboard': return <DashboardHome openBotBuilder={openBotBuilder} openSection={changeSection} />;
             case 'bot_ideas': return <BotIdeasPage openBotBuilder={openBotBuilder} />;
             case 'quick_bot': return <QuickBotPage openBotBuilder={openBotBuilder} openSection={changeSection} />;
-            case 'bot_builder': return <div className='prodb-bot-builder-host'><Outlet /></div>;
+            case 'bot_builder': return null;
             case 'free_bots': return <FreeBotsPage openBotBuilder={openBotBuilder} />;
             case 'signal_ai': return <SignalAIPage />;
             case 'auto_trader': return <AutoTraderPage />;
@@ -166,8 +165,15 @@ const PremiumLayout = observer(() => {
 
     const isBotBuilder = section === 'bot_builder';
     return <div className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''}`}>
+        <GlobalContractBridge />
         <PremiumHeader active={section} onChange={changeSection} />
-        <main className='prodb-premium-content'>{renderSection()}</main>
+        <main className='prodb-premium-content'>
+            {!isBotBuilder && renderSection()}
+            <div className={`prodb-bot-builder-host ${isBotBuilder ? 'is-active' : 'is-hidden'}`} aria-hidden={!isBotBuilder}>
+                <Outlet />
+            </div>
+        </main>
+        <GlobalQuickTrade hidden={isBotBuilder} />
         {!isBotBuilder && <BottomStatusBar />}
     </div>;
 });

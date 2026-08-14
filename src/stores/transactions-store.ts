@@ -62,7 +62,6 @@ export default class TransactionsStore {
 
     get statistics() {
         let total_runs = 0;
-        // Filter out only contract transactions and remove dividers
         const trxs = this.transactions.filter(
             trx => trx.type === transaction_elements.CONTRACT && typeof trx.data === 'object'
         );
@@ -110,15 +109,18 @@ export default class TransactionsStore {
     }
 
     pushTransaction(data: TContractInfo) {
+        if (!data?.contract_id) return;
+
         const is_completed = isEnded(data as ProposalOpenContract);
         const { run_id } = this.root_store.run_panel;
         const current_account = this.core?.client?.loginid as string;
+        if (!current_account) return;
 
         const contract: TContractInfo = {
             ...data,
             is_completed,
             run_id,
-            date_start: formatDate(data.date_start, 'YYYY-M-D HH:mm:ss [GMT]'),
+            date_start: data.date_start ? formatDate(data.date_start, 'YYYY-M-D HH:mm:ss [GMT]') : data.date_start,
             entry_tick: data.entry_spot,
             entry_tick_time: data.entry_tick_time && formatDate(data.entry_tick_time, 'YYYY-M-D HH:mm:ss [GMT]'),
             exit_tick: (data as any).exit_spot || data.exit_tick,
@@ -133,17 +135,20 @@ export default class TransactionsStore {
             };
         }
 
+        const incoming_contract_id = Number(data.contract_id);
+        const incoming_buy_id = data.transaction_ids?.buy;
         const same_contract_index = this.elements[current_account]?.findIndex(c => {
-            if (typeof c.data === 'string') return false;
-            return (
-                c.type === transaction_elements.CONTRACT &&
-                c.data?.transaction_ids &&
-                c.data.transaction_ids.buy === data.transaction_ids?.buy
-            );
+            if (c.type !== transaction_elements.CONTRACT || typeof c.data === 'string' || !c.data) return false;
+
+            // New Deriv API proposal_open_contract responses guarantee contract_id,
+            // while transaction_ids is no longer safe to use as the sole identity.
+            const stored_contract_id = Number(c.data.contract_id);
+            if (incoming_contract_id && stored_contract_id && incoming_contract_id === stored_contract_id) return true;
+
+            return Boolean(incoming_buy_id && c.data.transaction_ids?.buy === incoming_buy_id);
         });
 
         if (same_contract_index === -1) {
-            // Render a divider if the "run_id" for this contract is different.
             if (this.elements[current_account]?.length > 0) {
                 const temp_contract = this.elements[current_account]?.[0];
                 const is_contract = temp_contract.type === transaction_elements.CONTRACT;
@@ -165,14 +170,13 @@ export default class TransactionsStore {
                 data: contract,
             });
         } else {
-            // If data belongs to existing contract in memory, update it.
             this.elements[current_account]?.splice(same_contract_index, 1, {
                 type: transaction_elements.CONTRACT,
                 data: contract,
             });
         }
 
-        this.elements = { ...this.elements }; // force update
+        this.elements = { ...this.elements };
     }
 
     clear() {
@@ -187,7 +191,6 @@ export default class TransactionsStore {
     registerReactions() {
         const { client } = this.core;
 
-        // Write transactions to session storage on each change in transaction elements.
         const disposeTransactionElementsListener = reaction(
             () => this.elements[client?.loginid as string],
             elements => {
@@ -197,9 +200,6 @@ export default class TransactionsStore {
             }
         );
 
-        // User could've left the page mid-contract. On initial load, try
-        // to recover any pending contracts so we can reflect accurate stats
-        // and transactions.
         const disposeRecoverContracts = reaction(
             () => this.transactions.length,
             () => this.recoverPendingContracts()
@@ -260,8 +260,6 @@ export default class TransactionsStore {
     }
 
     async recoverPendingContractsById(contract_id: number, contract: ProposalOpenContract | null = null) {
-        // TODO: need to fix as the portfolio is not available now
-        // const positions = this.core.portfolio.positions;
         const positions: unknown[] = [];
 
         if (contract) {
@@ -275,14 +273,14 @@ export default class TransactionsStore {
             if (this.core?.client?.loginid) {
                 const current_account = this.core?.client?.loginid;
                 if (!this.elements[current_account]?.length) {
-                    this.sortOutPositionsBeforeAction(positions);
+                    this.sortOutPositionsBeforeAction(positions as TPortfolioPosition[]);
                 }
 
                 const elements = this.elements[current_account];
                 const [element = null] = elements;
                 if (typeof element?.data === 'object' && !element?.data?.profit) {
                     const element_id = element.data.contract_id;
-                    this.sortOutPositionsBeforeAction(positions, element_id);
+                    this.sortOutPositionsBeforeAction(positions as TPortfolioPosition[], element_id);
                 }
             }
         }
