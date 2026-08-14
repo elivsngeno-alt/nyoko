@@ -22,18 +22,24 @@ interface AuthInfo {
     site_id?: string;
 }
 
+const AUTH_STORAGE_KEY = 'auth_info';
+
 export class OAuthTokenExchangeService {
-    static getAuthInfo(): AuthInfo | null {
+    private static readStoredAuthInfo(): AuthInfo | null {
         try {
-            const authInfoStr = sessionStorage.getItem('auth_info');
-            if (!authInfoStr) return null;
+            const persistent = localStorage.getItem(AUTH_STORAGE_KEY);
+            const legacy = sessionStorage.getItem(AUTH_STORAGE_KEY);
+            const raw = persistent || legacy;
+            if (!raw) return null;
 
-            const authInfo: AuthInfo = JSON.parse(authInfoStr);
-            if (authInfo.expires_at && Date.now() >= authInfo.expires_at) {
-                this.clearAuthInfo();
-                return null;
+            const authInfo = JSON.parse(raw) as AuthInfo;
+            if (!authInfo?.access_token && !authInfo?.refresh_token) return null;
+
+            // One-time migration from the previous session-only implementation.
+            if (!persistent && legacy) {
+                localStorage.setItem(AUTH_STORAGE_KEY, legacy);
+                sessionStorage.removeItem(AUTH_STORAGE_KEY);
             }
-
             return authInfo;
         } catch (error) {
             ErrorLogger.error('OAuth', 'Error parsing auth_info', error);
@@ -41,22 +47,35 @@ export class OAuthTokenExchangeService {
         }
     }
 
+    private static storeAuthInfo(authInfo: AuthInfo): void {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authInfo));
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+
+    static getAuthInfo(): AuthInfo | null {
+        return this.readStoredAuthInfo();
+    }
+
     static clearAuthInfo(): void {
-        sessionStorage.removeItem('auth_info');
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem('deriv_accounts');
+        sessionStorage.removeItem('deriv_accounts');
         sessionStorage.removeItem('oauth_site_id');
         sessionStorage.removeItem('oauth_redirect_uri');
     }
 
     static isAuthenticated(): boolean {
-        return !!this.getAuthInfo()?.access_token;
+        const auth = this.readStoredAuthInfo();
+        return Boolean(auth?.access_token || auth?.refresh_token);
     }
 
     static getAccessToken(): string | null {
-        return this.getAuthInfo()?.access_token || null;
+        return this.readStoredAuthInfo()?.access_token || null;
     }
 
     private static getSiteId(): string {
-        const storedSiteId = sessionStorage.getItem('oauth_site_id') || this.getAuthInfo()?.site_id;
+        const storedSiteId = sessionStorage.getItem('oauth_site_id') || this.readStoredAuthInfo()?.site_id;
         if (storedSiteId && getSiteConfigById(storedSiteId)) return storedSiteId;
         return requireCurrentSiteConfig().id;
     }
@@ -147,7 +166,7 @@ export class OAuthTokenExchangeService {
         };
 
         if (data.refresh_token) authInfo.refresh_token = data.refresh_token;
-        sessionStorage.setItem('auth_info', JSON.stringify(authInfo));
+        this.storeAuthInfo(authInfo);
 
         try {
             const { DerivWSAccountsService } = await import('./derivws-accounts.service');
@@ -170,8 +189,9 @@ export class OAuthTokenExchangeService {
             await api_base.init(true);
         } catch (error) {
             ErrorLogger.error('OAuth', 'Failed to initialize authenticated account/WebSocket session', error);
-            this.clearAuthInfo();
+            // Preserve a successfully-issued OAuth session across transient network errors.
             return {
+                ...data,
                 error: 'account_fetch_failed',
                 error_description: error instanceof Error ? error.message : 'Failed to initialize the authenticated account.',
             };
@@ -199,7 +219,7 @@ export class OAuthTokenExchangeService {
 
         if (data.error || !data.access_token) return data;
 
-        const existingAuth = this.getAuthInfo();
+        const existingAuth = this.readStoredAuthInfo();
         const authInfo: AuthInfo = {
             access_token: data.access_token,
             token_type: data.token_type || 'Bearer',
@@ -210,7 +230,59 @@ export class OAuthTokenExchangeService {
             site_id: siteId,
         };
 
-        sessionStorage.setItem('auth_info', JSON.stringify(authInfo));
+        this.storeAuthInfo(authInfo);
         return data;
+    }
+
+    static async restoreSession(): Promise<boolean> {
+        const stored = this.readStoredAuthInfo();
+        if (!stored) return false;
+
+        let accessToken = stored.access_token;
+        const expiresSoon = Boolean(stored.expires_at && Date.now() >= stored.expires_at - 30_000);
+
+        if (expiresSoon) {
+            if (!stored.refresh_token) {
+                this.clearAuthInfo();
+                return false;
+            }
+
+            const refreshed = await this.refreshAccessToken(stored.refresh_token);
+            if (refreshed.error || !refreshed.access_token) {
+                // A revoked/invalid refresh token means this is a genuine logged-out session.
+                if (refreshed.error !== 'network_error') this.clearAuthInfo();
+                return false;
+            }
+            accessToken = refreshed.access_token;
+        }
+
+        if (!accessToken) return false;
+
+        try {
+            const { DerivWSAccountsService } = await import('./derivws-accounts.service');
+            let accounts = DerivWSAccountsService.getStoredAccounts() || [];
+
+            try {
+                const fresh = await DerivWSAccountsService.refreshAccounts(accessToken);
+                if (fresh.length) accounts = fresh;
+            } catch (error) {
+                if (!accounts.length) throw error;
+                console.warn('[OAuth] Using locally cached Deriv accounts while account refresh is unavailable.');
+            }
+
+            if (!accounts.length) return false;
+
+            const savedAccount = localStorage.getItem('active_loginid');
+            const active = accounts.find(account => account.account_id === savedAccount) || accounts[0];
+            localStorage.setItem('active_loginid', active.account_id);
+            localStorage.setItem('account_type', active.account_type === 'demo' ? 'demo' : 'real');
+
+            const { api_base } = await import('@/external/bot-skeleton');
+            await api_base.init(true);
+            return true;
+        } catch (error) {
+            ErrorLogger.error('OAuth', 'Failed to restore persisted Deriv session', error);
+            return false;
+        }
     }
 }
