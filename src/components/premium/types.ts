@@ -11,6 +11,7 @@ export type PremiumSection =
     | 'batch_trader'
     | 'copy_trading'
     | 'speedbot'
+    | 'calculator'
     | 'pro_ai'
     | 'analysis_tools'
     | 'analysis_hub'
