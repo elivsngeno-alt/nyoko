@@ -17,7 +17,6 @@ export default Engine =>
             }
 
             const onSuccess = response => {
-                // Don't unnecessarily send a forget request for a purchased contract.
                 const { buy } = response;
 
                 contractStatus({
@@ -28,6 +27,14 @@ export default Engine =>
 
                 this.contractId = buy.contract_id;
                 this.store.dispatch(purchaseSuccessful());
+
+                // Current Deriv trading workflow requires monitoring the exact
+                // purchased contract through proposal_open_contract. The old
+                // broad account stream can omit the final settled event for a
+                // fast tick contract, which leaves Blockly waiting forever in
+                // AFTER_PURCHASE. Attach the contract-specific stream as soon
+                // as buy succeeds; OpenContract owns cleanup and recovery.
+                this.subscribeOpenContract(this.contractId);
 
                 if (this.is_proposal_subscription_required) {
                     this.renewProposalsOnPurchase();
