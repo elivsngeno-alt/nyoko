@@ -23,6 +23,126 @@
                     "manifest_url": "/free-bots/bots.json",
                     "base_url": "/free-bots"
                 }
+            },
+            {
+                "id": "husseinfx",
+                "hosts": ["husseinfx.site", "www.husseinfx.site"],
+                "display_domain": "husseinfx.site",
+                "website_url": "https://husseinfx.site",
+                "redirect_uri": "https://husseinfx.site/callback",
+                "client_id": "33B0O9dYtRl6X3OQ6rJsz",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "tradinghubs",
+                "hosts": ["tradinghubs.site", "www.tradinghubs.site"],
+                "display_domain": "tradinghubs.site",
+                "website_url": "https://tradinghubs.site",
+                "redirect_uri": "https://tradinghubs.site/callback",
+                "client_id": "33hi7ev9NiDjWY64OJuSw",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "mafiahub",
+                "hosts": ["mafiahub.site", "www.mafiahub.site"],
+                "display_domain": "mafiahub.site",
+                "website_url": "https://mafiahub.site",
+                "redirect_uri": "https://mafiahub.site/callback",
+                "client_id": "33ABjz4hBB7eawgytiT6P",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "easytraders",
+                "hosts": ["easytraders.site", "www.easytraders.site"],
+                "display_domain": "easytraders.site",
+                "website_url": "https://easytraders.site",
+                "redirect_uri": "https://easytraders.site/callback",
+                "client_id": "33Dp1fPdIGm7Sf0zGpJYw",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "dollarmaster",
+                "hosts": ["dollarmaster.site", "www.dollarmaster.site"],
+                "display_domain": "dollarmaster.site",
+                "website_url": "https://dollarmaster.site",
+                "redirect_uri": "https://dollarmaster.site/callback",
+                "client_id": "33Do7K9svQABFySnUo7pE",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "profitempire",
+                "hosts": ["profitempire.site", "www.profitempire.site"],
+                "display_domain": "profitempire.site",
+                "website_url": "https://profitempire.site",
+                "redirect_uri": "https://profitempire.site/callback",
+                "client_id": "33DtjQWnmdxRkogkgAOtP",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "mkulimamdogo",
+                "hosts": ["mkulimamdogo.site", "www.mkulimamdogo.site"],
+                "display_domain": "mkulimamdogo.site",
+                "website_url": "https://mkulimamdogo.site",
+                "redirect_uri": "https://mkulimamdogo.site/callback",
+                "client_id": "33FIBnsBLHouNk9bOnSVa",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "kicktrade",
+                "hosts": ["kicktrade.site", "www.kicktrade.site"],
+                "display_domain": "kicktrade.site",
+                "website_url": "https://kicktrade.site",
+                "redirect_uri": "https://kicktrade.site/callback",
+                "client_id": "33vlry53HSLhXICBcUURu",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "dollarsigns",
+                "hosts": ["dollarsigns.site", "www.dollarsigns.site"],
+                "display_domain": "dollarsigns.site",
+                "website_url": "https://dollarsigns.site",
+                "redirect_uri": "https://dollarsigns.site/callback",
+                "client_id": "33uLmMotAXYx94pf0CLe6",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "masterking",
+                "hosts": ["masterking.site", "www.masterking.site"],
+                "display_domain": "masterking.site",
+                "website_url": "https://masterking.site",
+                "redirect_uri": "https://masterking.site/callback",
+                "client_id": "343ACPNH62ADIB9N4vICQ",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "glorywealth",
+                "hosts": ["glorywealth.site", "www.glorywealth.site"],
+                "display_domain": "glorywealth.site",
+                "website_url": "https://glorywealth.site",
+                "redirect_uri": "https://glorywealth.site/callback",
+                "client_id": "343ATqObjbIuRX7bqziZZ",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
+                "id": "digitaltraders",
+                "hosts": ["digitaltraders.site", "www.digitaltraders.site"],
+                "display_domain": "digitaltraders.site",
+                "website_url": "https://digitaltraders.site",
+                "redirect_uri": "https://digitaltraders.site/callback",
+                "client_id": "33Xc49HyQVwVGFQaUe333",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
             }
         ]
     },
