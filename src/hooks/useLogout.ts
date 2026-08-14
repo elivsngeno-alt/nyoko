@@ -1,44 +1,43 @@
 import { useCallback } from 'react';
 import { useStore } from '@/hooks/useStore';
+import { DerivWSAccountsService } from '@/services/derivws-accounts.service';
+import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.service';
 import { ErrorLogger } from '@/utils/error-logger';
 
 /**
- * Custom hook to handle logout functionality
- * Clears all session and local storage to reset the session
- * @returns {Function} handleLogout - Function to trigger the logout process
+ * Explicit logout is the boundary for the persistent local session.
+ * Refresh/reconnect keeps the OAuth session; logout clears it.
  */
 export const useLogout = () => {
     const { client } = useStore() ?? {};
 
     return useCallback(async () => {
         try {
-            // Call the client store logout method which clears all storage
             await client?.logout();
-            // Analytics.reset() removed - Analytics package has been removed from the project
-            // See migrate-docs/MONITORING_PACKAGES.md for re-enabling analytics if needed
         } catch (error) {
-            ErrorLogger.error('Logout', 'Logout failed', error);
-            // If logout fails, clear only auth-related storage keys
-            // This preserves user preferences (theme, language, etc.) while ensuring auth data is cleared
+            ErrorLogger.error('Logout', 'Logout request failed; clearing local session anyway', error);
+        } finally {
             try {
-                // Clear auth-related sessionStorage items
-                sessionStorage.removeItem('auth_info');
+                OAuthTokenExchangeService.clearAuthInfo();
+                DerivWSAccountsService.clearCache();
+                DerivWSAccountsService.clearStoredAccounts();
 
-                // Clear auth-related localStorage items
                 localStorage.removeItem('active_loginid');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('accountsList');
                 localStorage.removeItem('clientAccounts');
+                localStorage.removeItem('client_account_details');
                 localStorage.removeItem('account_type');
+                localStorage.removeItem('client.country');
+
+                sessionStorage.removeItem('oauth_code_verifier');
+                sessionStorage.removeItem('oauth_code_verifier_timestamp');
+                sessionStorage.removeItem('oauth_csrf_token');
+                sessionStorage.removeItem('oauth_csrf_token_timestamp');
+                sessionStorage.removeItem('oauth_site_id');
+                sessionStorage.removeItem('oauth_redirect_uri');
             } catch (storageError) {
-                ErrorLogger.error('Logout', 'Failed to clear auth storage', storageError);
-                // Last resort: if targeted clearing fails, clear all storage
-                try {
-                    sessionStorage.clear();
-                    localStorage.clear();
-                } catch (finalError) {
-                    ErrorLogger.error('Logout', 'Failed to clear all storage', finalError);
-                }
+                ErrorLogger.error('Logout', 'Failed to clear persisted auth storage', storageError);
             }
         }
     }, [client]);
