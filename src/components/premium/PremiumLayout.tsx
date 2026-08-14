@@ -16,6 +16,7 @@ import LandingPage from './LandingPage';
 import PremiumHeader from './PremiumHeader';
 import PremiumLoader from './PremiumLoader';
 import AnalysisToolsPage from './pages/AnalysisToolsPage';
+import BatchTraderPage from './pages/BatchTraderPage';
 import BulkTraderPage from './pages/BulkTraderPage';
 import DashboardHome from './pages/DashboardHome';
 import FreeBotsPage from './pages/FreeBotsPage';
@@ -46,10 +47,11 @@ import './premium-mobile-shell.scss';
 import './premium-run-panel-right.scss';
 import './premium-ai-scanner.scss';
 import './premium-ai-scanner-override.scss';
+import './premium-batch-trader.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
-    'manual_trading', 'bulk_trader', 'copy_trading', 'speedbot', 'pro_ai', 'analysis_tools',
+    'manual_trading', 'bulk_trader', 'batch_trader', 'copy_trading', 'speedbot', 'pro_ai', 'analysis_tools',
     'analysis_hub', 'charts', 'dtrader',
 ];
 
@@ -101,9 +103,6 @@ const PremiumLayout = observer(() => {
     useEffect(() => {
         if (!isAuthenticated || section !== 'bot_builder') return;
 
-        // AppContent remains mounted even while another premium section is visible.
-        // Pin the native tab to Bot Builder only when that section is opened. The
-        // Run Panel now keeps its own open/collapsed state instead of being forced open.
         activateNativeBotBuilder();
         const frame = window.requestAnimationFrame(activateNativeBotBuilder);
         const retry = window.setTimeout(activateNativeBotBuilder, 120);
@@ -157,6 +156,7 @@ const PremiumLayout = observer(() => {
             case 'auto_trader': return <AutoTraderPage />;
             case 'manual_trading': return <AdvancedManualTradingPage />;
             case 'bulk_trader': return <BulkTraderPage />;
+            case 'batch_trader': return <BatchTraderPage />;
             case 'copy_trading': return <PatCopyTradingPage />;
             case 'speedbot': return <SpeedbotPage />;
             case 'pro_ai': return <ProAIPage />;
