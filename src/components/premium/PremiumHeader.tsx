@@ -11,6 +11,7 @@ const navItems: Array<{ id: PremiumSection; label: string; Icon: typeof HomeIcon
     { id: 'free_bots', label: 'Free Bots', Icon: RobotIcon },
     { id: 'bulk_trader', label: 'Bulk Trader', Icon: GridIcon },
     { id: 'batch_trader', label: 'Batch Trader', Icon: GridIcon },
+    { id: 'speedbot', label: 'Speed Bot', Icon: GridIcon },
     { id: 'copy_trading', label: 'Copy Trading', Icon: CopyIcon },
     { id: 'analysis_tools', label: 'Analysis Tool', Icon: SearchIcon },
 ];
