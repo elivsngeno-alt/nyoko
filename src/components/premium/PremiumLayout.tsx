@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { generateOAuthURL } from '@/components/shared';
 import { DBOT_TABS } from '@/constants/bot-contents';
 import { api_base } from '@/external/bot-skeleton';
@@ -35,6 +35,7 @@ import './premium-live.scss';
 import './premium-imported.scss';
 import './premium-imported-library.scss';
 import './premium-token-panel.scss';
+import './premium-native-bot-builder.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
@@ -42,8 +43,8 @@ const validSections: PremiumSection[] = [
     'analysis_hub', 'charts', 'dtrader',
 ];
 
-const readSection = (): PremiumSection => {
-    const value = window.location.hash.replace(/^#\/?/, '').split('?')[0] as PremiumSection;
+const sectionFromHash = (hash: string): PremiumSection => {
+    const value = hash.replace(/^#\/?/, '').split('?')[0] as PremiumSection;
     return validSections.includes(value) ? value : 'dashboard';
 };
 
@@ -51,7 +52,9 @@ const PremiumLayout = observer(() => {
     const { activeLoginid, isAuthorizing, setIsAuthorizing } = useApiBase();
     const store = useStore();
     const { client, dashboard, run_panel } = store ?? {};
-    const [section, setSection] = useState<PremiumSection>(readSection);
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [section, setSection] = useState<PremiumSection>(() => sectionFromHash(location.hash));
     const [, setAuthProbe] = useState(0);
     const hasBootstrappedSession = useRef(false);
 
@@ -61,11 +64,10 @@ const PremiumLayout = observer(() => {
     const isAuthenticated = Boolean(activeLoginid || client?.is_logged_in || hasStoredAuth);
 
     useEffect(() => { document.title = getTemplateDomain(); }, []);
+
     useEffect(() => {
-        const handleHashChange = () => setSection(readSection());
-        window.addEventListener('hashchange', handleHashChange);
-        return () => window.removeEventListener('hashchange', handleHashChange);
-    }, []);
+        setSection(sectionFromHash(location.hash));
+    }, [location.hash]);
 
     useEffect(() => {
         if (hasBootstrappedSession.current || isOAuthCallback || !hasStoredAuth || activeLoginid || client?.is_logged_in) return;
@@ -82,11 +84,28 @@ const PremiumLayout = observer(() => {
         return () => window.clearInterval(timer);
     }, [isAuthenticated, isOAuthCallback, isAuthorizing]);
 
-    useEffect(() => {
-        if (!isAuthenticated || section !== 'bot_builder') return;
+    const activateNativeBotBuilder = useCallback(() => {
         dashboard?.setActiveTab(DBOT_TABS.BOT_BUILDER);
         run_panel?.toggleDrawer(true);
-    }, [dashboard, isAuthenticated, run_panel, section]);
+    }, [dashboard, run_panel]);
+
+    useEffect(() => {
+        if (!isAuthenticated || section !== 'bot_builder') return;
+
+        // AppContent mounts Deriv's native <Main /> and <BotBuilder /> together.
+        // Keep the official internal tab pinned to Bot Builder even after Main's
+        // initial hash-reading effect runs, and keep the native Run Panel open.
+        activateNativeBotBuilder();
+        const frame = window.requestAnimationFrame(activateNativeBotBuilder);
+        const retry = window.setTimeout(activateNativeBotBuilder, 120);
+        const resize = window.setTimeout(() => window.dispatchEvent(new Event('resize')), 220);
+
+        return () => {
+            window.cancelAnimationFrame(frame);
+            window.clearTimeout(retry);
+            window.clearTimeout(resize);
+        };
+    }, [activateNativeBotBuilder, isAuthenticated, section]);
 
     const startOAuth = useCallback(async (prompt?: string) => {
         try {
@@ -101,13 +120,22 @@ const PremiumLayout = observer(() => {
     }, [setIsAuthorizing]);
 
     const changeSection = useCallback((next: PremiumSection) => {
-        if (next === 'bot_builder') {
-            dashboard?.setActiveTab(DBOT_TABS.BOT_BUILDER);
-            run_panel?.toggleDrawer(true);
-        }
         setSection(next);
-        window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#${next}`);
-    }, [dashboard, run_panel]);
+
+        // Use React Router navigation instead of history.replaceState. Deriv's
+        // native Main component reads useLocation().hash to select BOT_BUILDER;
+        // bypassing React Router left it on Dashboard and hid the Blockly workspace.
+        navigate(
+            {
+                pathname: location.pathname,
+                search: location.search,
+                hash: `#${next}`,
+            },
+            { replace: true }
+        );
+
+        if (next === 'bot_builder') activateNativeBotBuilder();
+    }, [activateNativeBotBuilder, location.pathname, location.search, navigate]);
 
     if (!isAuthenticated && (isOAuthCallback || isAuthorizing)) return <PremiumLoader />;
     if (!isAuthenticated) return <LandingPage onLogin={() => startOAuth()} onSignup={() => startOAuth('registration')} busy={isAuthorizing} />;
@@ -139,7 +167,7 @@ const PremiumLayout = observer(() => {
     return <div className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''}`}>
         <PremiumHeader active={section} onChange={changeSection} />
         <main className='prodb-premium-content'>{renderSection()}</main>
-        <BottomStatusBar botBuilderActive={isBotBuilder} />
+        {!isBotBuilder && <BottomStatusBar />}
     </div>;
 });
 
