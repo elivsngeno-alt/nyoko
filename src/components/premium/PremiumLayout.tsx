@@ -41,6 +41,7 @@ import './premium-token-panel.scss';
 import './premium-native-bot-builder.scss';
 import './premium-account.scss';
 import './premium-global-trading.scss';
+import './premium-mobile-shell.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
@@ -91,14 +92,14 @@ const PremiumLayout = observer(() => {
 
     const activateNativeBotBuilder = useCallback(() => {
         dashboard?.setActiveTab(DBOT_TABS.BOT_BUILDER);
-        run_panel?.toggleDrawer(true);
-    }, [dashboard, run_panel]);
+    }, [dashboard]);
 
     useEffect(() => {
         if (!isAuthenticated || section !== 'bot_builder') return;
 
         // AppContent remains mounted even while another premium section is visible.
-        // Pin the native tab to Bot Builder only when that section is opened.
+        // Pin the native tab to Bot Builder only when that section is opened. The
+        // Run Panel now keeps its own open/collapsed state instead of being forced open.
         activateNativeBotBuilder();
         const frame = window.requestAnimationFrame(activateNativeBotBuilder);
         const retry = window.setTimeout(activateNativeBotBuilder, 120);
@@ -164,12 +165,14 @@ const PremiumLayout = observer(() => {
     };
 
     const isBotBuilder = section === 'bot_builder';
-    return <div className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''}`}>
+    const isRunPanelOpen = Boolean(run_panel?.is_drawer_open);
+
+    return <div className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''} ${isRunPanelOpen ? 'prodb-premium-shell--run-open' : ''}`}>
         <GlobalContractBridge />
         <PremiumHeader active={section} onChange={changeSection} />
         <main className='prodb-premium-content'>
             {!isBotBuilder && renderSection()}
-            <div className={`prodb-bot-builder-host ${isBotBuilder ? 'is-active' : 'is-hidden'}`} aria-hidden={!isBotBuilder}>
+            <div className={`prodb-bot-builder-host ${isBotBuilder ? 'is-active' : 'is-hidden'}`} data-premium-builder-active={isBotBuilder ? 'true' : 'false'}>
                 <Outlet />
             </div>
         </main>
