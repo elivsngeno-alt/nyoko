@@ -1,4 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+    CurrencyAudIcon,
+    CurrencyBtcIcon,
+    CurrencyDemoIcon,
+    CurrencyEthIcon,
+    CurrencyEurIcon,
+    CurrencyGbpIcon,
+    CurrencyLtcIcon,
+    CurrencyNoneIcon,
+    CurrencyUsdIcon,
+    CurrencyUsdtIcon,
+} from '@deriv/quill-icons';
 import { observer } from 'mobx-react-lite';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
@@ -10,47 +22,29 @@ const money = (value: string | number, currency = 'USD') => {
     return `${Number.isFinite(amount) ? amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'} ${currency}`;
 };
 
-const currencyFlags: Record<string, string> = {
-    AED: '🇦🇪',
-    AUD: '🇦🇺',
-    BRL: '🇧🇷',
-    CAD: '🇨🇦',
-    CHF: '🇨🇭',
-    EUR: '🇪🇺',
-    GBP: '🇬🇧',
-    IDR: '🇮🇩',
-    KES: '🇰🇪',
-    MXN: '🇲🇽',
-    NGN: '🇳🇬',
-    NZD: '🇳🇿',
-    SGD: '🇸🇬',
-    USD: '🇺🇸',
-    ZAR: '🇿🇦',
+const currencyIconMap = {
+    usd: CurrencyUsdIcon,
+    eur: CurrencyEurIcon,
+    gbp: CurrencyGbpIcon,
+    aud: CurrencyAudIcon,
+    btc: CurrencyBtcIcon,
+    eth: CurrencyEthIcon,
+    ltc: CurrencyLtcIcon,
+    ust: CurrencyUsdtIcon,
+    usdt: CurrencyUsdtIcon,
+    demo: CurrencyDemoIcon,
 };
 
-const DerivDemoIcon = () => (
-    <svg className='prodb-api-account-icon__demo-svg' viewBox='0 0 28 28' aria-hidden='true'>
-        <circle cx='14' cy='14' r='14' fill='#4BA9AA' />
-        <path d='M11.1 7.4h3.5c4.05 0 6.4 2.53 6.4 6.6s-2.35 6.6-6.4 6.6h-3.5v-2.35h3.28c2.55 0 4.06-1.58 4.06-4.25s-1.51-4.25-4.06-4.25H11.1V7.4Z' fill='#fff' />
-        <path d='M6.7 9.55h6.15M6.7 14h6.15M6.7 18.45h6.15' stroke='#fff' strokeWidth='2' strokeLinecap='round' />
-    </svg>
-);
+const AccountIcon = ({ account }: { account?: DerivAccount }) => {
+    const currencyKey = account?.account_type === 'demo' ? 'demo' : (account?.currency || '').toLowerCase();
+    const IconComponent = currencyIconMap[currencyKey as keyof typeof currencyIconMap] || CurrencyNoneIcon;
 
-const CurrencyFlag = ({ currency = 'USD' }: { currency?: string }) => {
-    const code = currency.toUpperCase();
-    const flag = currencyFlags[code];
     return (
-        <span className='prodb-api-account-icon__currency' aria-hidden='true'>
-            {flag || code.slice(0, 1)}
+        <span className={`prodb-api-account-icon ${account?.account_type === 'demo' ? 'is-demo' : 'is-real'}`} aria-hidden='true'>
+            <IconComponent iconSize='sm' />
         </span>
     );
 };
-
-const AccountIcon = ({ account }: { account?: DerivAccount }) => (
-    <span className={`prodb-api-account-icon ${account?.account_type === 'demo' ? 'is-demo' : 'is-real'}`} aria-hidden='true'>
-        {account?.account_type === 'demo' ? <DerivDemoIcon /> : <CurrencyFlag currency={account?.currency} />}
-    </span>
-);
 
 const PremiumAccountSwitcher = observer(() => {
     const { activeLoginid, accountList } = useApiBase();
