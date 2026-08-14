@@ -1,0 +1,70 @@
+/*
+ * Global AI scanner hardening.
+ *
+ * premium-app.scss already contains an older `.prodb-ai-scanner` selector for
+ * the small "DERIV LIVE" badge inside Bulk Trader. That legacy selector sets
+ * height: 34px and padding, which also affected the new global scanner panel.
+ * Scope the real scanner to the direct child mounted by PremiumLayout so the
+ * legacy Bulk Trader badge can keep its existing appearance.
+ */
+.prodb-premium-shell > .prodb-ai-scanner {
+    position: fixed !important;
+    top: 88px !important;
+    right: 22px !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: min(430px, calc(100vw - 24px)) !important;
+    height: min(500px, calc(100vh - 112px)) !important;
+    min-height: min(350px, calc(100vh - 112px)) !important;
+    max-height: calc(100vh - 112px) !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box;
+    border: 1px solid #1f2a30 !important;
+    border-radius: 10px !important;
+    background: #eef5ff !important;
+    color: #13223a !important;
+    box-shadow: 0 24px 68px rgba(8, 18, 28, .30) !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    z-index: 3500 !important;
+}
+
+.prodb-premium-shell > .prodb-ai-scanner > .prodb-ai-scanner__header {
+    flex: 0 0 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+}
+
+.prodb-premium-shell > .prodb-ai-scanner > .prodb-ai-scanner__body {
+    display: block !important;
+    flex: 1 1 auto !important;
+    width: 100%;
+    min-height: 0 !important;
+    padding: 12px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    box-sizing: border-box;
+    background: #eef5ff;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+@media (max-width: 768px) {
+    .prodb-premium-shell > .prodb-ai-scanner {
+        top: max(68px, env(safe-area-inset-top, 0px)) !important;
+        right: 8px !important;
+        left: 8px !important;
+        width: auto !important;
+        height: min(540px, calc(100vh - 82px)) !important;
+        min-height: min(350px, calc(100vh - 82px)) !important;
+        max-height: calc(100vh - 82px - env(safe-area-inset-bottom, 0px)) !important;
+        border-radius: 11px !important;
+    }
+
+    .prodb-premium-shell > .prodb-ai-scanner > .prodb-ai-scanner__body {
+        padding: 10px !important;
+    }
+}
