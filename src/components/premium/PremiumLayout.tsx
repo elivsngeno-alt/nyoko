@@ -45,6 +45,7 @@ import './premium-global-trading.scss';
 import './premium-mobile-shell.scss';
 import './premium-run-panel-right.scss';
 import './premium-ai-scanner.scss';
+import './premium-ai-scanner-override.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
