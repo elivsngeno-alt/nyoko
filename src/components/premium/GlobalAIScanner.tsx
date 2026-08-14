@@ -4,6 +4,7 @@ import { PremiumDerivApiService } from '@/services/premium-deriv-api.service';
 
 type StrategyId = 'over1_under8' | 'over2_under7' | 'over3_under6';
 type ContractSide = 'DIGITOVER' | 'DIGITUNDER';
+type Position = { x: number; y: number };
 
 type ScannerStrategy = {
     id: StrategyId;
@@ -32,8 +33,6 @@ type ScanResult = {
     sampleSize: number;
 };
 
-type ButtonPosition = { x: number; y: number };
-
 const STRATEGIES: ScannerStrategy[] = [
     { id: 'over1_under8', label: 'Over1 / Under8', over: 1, under: 8 },
     { id: 'over2_under7', label: 'Over2 / Under7', over: 2, under: 7 },
@@ -41,14 +40,17 @@ const STRATEGIES: ScannerStrategy[] = [
 ];
 
 const BUTTON_SIZE = 58;
+const PANEL_WIDTH = 430;
+const PANEL_HEIGHT = 500;
 const SCREEN_MARGIN = 10;
 const POSITION_KEY = 'prodb.ai-scanner.position.v1';
+const PANEL_POSITION_KEY = 'prodb.ai-scanner.panel-position.v1';
 const TEMPLATE_URL = '/ai-scanner/grffy.xml';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), Math.max(min, max));
 const sleep = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms));
 
-const defaultButtonPosition = (): ButtonPosition => {
+const defaultButtonPosition = (): Position => {
     if (typeof window === 'undefined') return { x: 20, y: 180 };
     return {
         x: Math.max(SCREEN_MARGIN, window.innerWidth - BUTTON_SIZE - 18),
@@ -56,18 +58,38 @@ const defaultButtonPosition = (): ButtonPosition => {
     };
 };
 
-const storedButtonPosition = (): ButtonPosition => {
-    if (typeof window === 'undefined') return defaultButtonPosition();
+const panelDimensions = () => {
+    if (typeof window === 'undefined') return { width: PANEL_WIDTH, height: PANEL_HEIGHT };
+    return {
+        width: Math.min(PANEL_WIDTH, Math.max(280, window.innerWidth - 16)),
+        height: Math.min(PANEL_HEIGHT, Math.max(330, window.innerHeight - 86)),
+    };
+};
+
+const defaultPanelPosition = (): Position => {
+    if (typeof window === 'undefined') return { x: 18, y: 100 };
+    const { width } = panelDimensions();
+    const mobile = window.innerWidth <= 768;
+    if (mobile) return { x: 8, y: Math.max(68, Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--prodb-mobile-header-stack')) || 68) };
+
+    // Leave the native right-side Run Panel its own lane. The scanner opens on
+    // the application workspace and can then be dragged anywhere in that area.
+    const x = window.innerWidth - width - 390;
+    return { x: clamp(x, 18, window.innerWidth - width - 18), y: 100 };
+};
+
+const readStoredPosition = (key: string, fallback: () => Position): Position => {
+    if (typeof window === 'undefined') return fallback();
     try {
-        const parsed = JSON.parse(localStorage.getItem(POSITION_KEY) || 'null');
+        const parsed = JSON.parse(localStorage.getItem(key) || 'null');
         if (Number.isFinite(parsed?.x) && Number.isFinite(parsed?.y)) return parsed;
     } catch {
         // Ignore malformed saved UI state.
     }
-    return defaultButtonPosition();
+    return fallback();
 };
 
-const clampButtonPosition = (position: ButtonPosition): ButtonPosition => {
+const clampButtonPosition = (position: Position): Position => {
     if (typeof window === 'undefined') return position;
     return {
         x: clamp(position.x, SCREEN_MARGIN, window.innerWidth - BUTTON_SIZE - SCREEN_MARGIN),
@@ -75,10 +97,20 @@ const clampButtonPosition = (position: ButtonPosition): ButtonPosition => {
     };
 };
 
+const clampPanelPosition = (position: Position): Position => {
+    if (typeof window === 'undefined') return position;
+    const { width, height } = panelDimensions();
+    const topBoundary = window.innerWidth <= 768 ? 62 : 70;
+    return {
+        x: clamp(position.x, 8, window.innerWidth - width - 8),
+        y: clamp(position.y, topBoundary, window.innerHeight - height - 8),
+    };
+};
+
 const toPipSize = (market: any) => {
     const direct = Number(market?.pip_size ?? market?.decimal_places);
-    if (Number.isFinite(direct) && direct >= 0 && direct <= 10) return Math.round(direct);
-    const pip = Number(market?.pip);
+    if (Number.isFinite(direct) && Number.isInteger(direct) && direct >= 0 && direct <= 10) return direct;
+    const pip = Number(market?.pip_size ?? market?.pip);
     if (Number.isFinite(pip) && pip > 0 && pip < 1) return Math.max(0, Math.round(-Math.log10(pip)));
     return 2;
 };
@@ -90,12 +122,9 @@ const normalizeMarkets = (symbols: any[]): ScannerMarket[] => {
         const name = String(item?.underlying_symbol_name || item?.display_name || item?.name || symbol).trim();
         if (!symbol) return;
 
-        // grffy is a synthetic digit Over/Under DBot template. Keep the scanner
-        // inside the volatility family that supports the same Blockly market setup.
         const isVolatilitySymbol = /^R_\d+$/i.test(symbol) || /^1HZ\d+V$/i.test(symbol);
         const isVolatilityName = /volatility/i.test(name);
         if (!isVolatilitySymbol && !isVolatilityName) return;
-
         unique.set(symbol, { symbol, name: name || symbol, pipSize: toPipSize(item) });
     });
     return [...unique.values()];
@@ -120,14 +149,25 @@ const winRate = (digits: number[], side: ContractSide, barrier: number) => {
 const expectedRate = (side: ContractSide, barrier: number) => side === 'DIGITOVER' ? (9 - barrier) / 10 : barrier / 10;
 
 const analyzeMarket = async (market: ScannerMarket, strategy: ScannerStrategy, tickCount: number): Promise<ScanResult> => {
-    const history = await PremiumDerivApiService.ticksHistory(market.symbol, tickCount, 'ticks');
-    const prices = Array.isArray(history?.history?.prices) ? history.history.prices : [];
-    const digits = lastDigits(prices, market.pipSize);
-    if (digits.length < Math.min(100, Math.max(30, Math.floor(tickCount * 0.1)))) {
-        throw new Error(`${market.name} returned insufficient tick history.`);
+    // PremiumDerivApiService.ticksHistory() already normalizes the Deriv response
+    // into a plain number[]. The previous scanner incorrectly tried to read
+    // history.history.prices and therefore treated every successful response as 0 ticks.
+    let prices = await PremiumDerivApiService.ticksHistory(market.symbol, tickCount, 'ticks');
+    if (!Array.isArray(prices)) prices = [];
+
+    // Some markets can return fewer records than requested. A scanner should use
+    // the real sample it received rather than fail because it did not equal 3000.
+    if (prices.length < 30 && tickCount > 500) {
+        const fallback = await PremiumDerivApiService.ticksHistory(market.symbol, 500, 'ticks');
+        if (Array.isArray(fallback) && fallback.length > prices.length) prices = fallback;
     }
 
-    const recentCount = Math.min(250, Math.max(50, Math.round(digits.length * 0.1)));
+    const digits = lastDigits(prices, market.pipSize);
+    if (digits.length < 30) {
+        throw new Error(`${market.name} returned only ${digits.length} usable ticks.`);
+    }
+
+    const recentCount = Math.min(250, Math.max(30, Math.round(digits.length * 0.1)));
     const recent = digits.slice(-recentCount);
     const candidates = [
         {
@@ -148,9 +188,6 @@ const analyzeMarket = async (market: ScannerMarket, strategy: ScannerStrategy, t
         const recoveryRate = winRate(recent, candidate.recoverySide, candidate.recoveryBarrier);
         const baseline = expectedRate(candidate.primarySide, candidate.primaryBarrier);
         const edge = primaryRate - baseline;
-        // Weight the full sample most heavily, confirm the current regime with
-        // recent ticks, and retain a smaller recovery-leg score because grffy
-        // switches to the opposite leg after a loss.
         const confidence = (primaryRate * 0.55) + (recentRate * 0.30) + (recoveryRate * 0.15) + Math.max(-0.03, Math.min(0.03, edge));
         return { ...candidate, primaryRate, recentRate, recoveryRate, confidence };
     });
@@ -229,7 +266,8 @@ const waitForWorkspace = async () => {
 };
 
 const GlobalAIScanner = ({ openBotBuilder }: { openBotBuilder: () => void }) => {
-    const [position, setPosition] = useState<ButtonPosition>(() => clampButtonPosition(storedButtonPosition()));
+    const [position, setPosition] = useState<Position>(() => clampButtonPosition(readStoredPosition(POSITION_KEY, defaultButtonPosition)));
+    const [panelPosition, setPanelPosition] = useState<Position>(() => clampPanelPosition(readStoredPosition(PANEL_POSITION_KEY, defaultPanelPosition)));
     const [isOpen, setIsOpen] = useState(false);
     const [strategyId, setStrategyId] = useState<StrategyId>('over1_under8');
     const [tickCount, setTickCount] = useState(3000);
@@ -239,22 +277,34 @@ const GlobalAIScanner = ({ openBotBuilder }: { openBotBuilder: () => void }) => 
     const [error, setError] = useState('');
     const [result, setResult] = useState<ScanResult | null>(null);
     const [topResults, setTopResults] = useState<ScanResult[]>([]);
-    const drag = useRef({ pointerId: -1, offsetX: 0, offsetY: 0, startX: 0, startY: 0, moved: false });
+    const orbDrag = useRef({ pointerId: -1, offsetX: 0, offsetY: 0, startX: 0, startY: 0, moved: false });
+    const panelDrag = useRef({ pointerId: -1, offsetX: 0, offsetY: 0 });
 
     const strategy = useMemo(() => STRATEGIES.find(item => item.id === strategyId) || STRATEGIES[0], [strategyId]);
 
     useEffect(() => {
-        const handleResize = () => setPosition(current => clampButtonPosition(current));
+        const handleResize = () => {
+            setPosition(current => clampButtonPosition(current));
+            setPanelPosition(current => clampPanelPosition(current));
+        };
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
+        };
     }, []);
 
     useEffect(() => {
         try { localStorage.setItem(POSITION_KEY, JSON.stringify(position)); } catch { /* UI preference only */ }
     }, [position]);
 
+    useEffect(() => {
+        try { localStorage.setItem(PANEL_POSITION_KEY, JSON.stringify(panelPosition)); } catch { /* UI preference only */ }
+    }, [panelPosition]);
+
     const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-        drag.current = {
+        orbDrag.current = {
             pointerId: event.pointerId,
             offsetX: event.clientX - position.x,
             offsetY: event.clientY - position.y,
@@ -266,22 +316,50 @@ const GlobalAIScanner = ({ openBotBuilder }: { openBotBuilder: () => void }) => 
     };
 
     const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
-        if (drag.current.pointerId !== event.pointerId) return;
-        const distance = Math.hypot(event.clientX - drag.current.startX, event.clientY - drag.current.startY);
-        if (distance > 4) drag.current.moved = true;
-        if (!drag.current.moved) return;
+        if (orbDrag.current.pointerId !== event.pointerId) return;
+        const distance = Math.hypot(event.clientX - orbDrag.current.startX, event.clientY - orbDrag.current.startY);
+        if (distance > 4) orbDrag.current.moved = true;
+        if (!orbDrag.current.moved) return;
         setPosition(clampButtonPosition({
-            x: event.clientX - drag.current.offsetX,
-            y: event.clientY - drag.current.offsetY,
+            x: event.clientX - orbDrag.current.offsetX,
+            y: event.clientY - orbDrag.current.offsetY,
         }));
     };
 
     const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
-        if (drag.current.pointerId !== event.pointerId) return;
-        const wasMoved = drag.current.moved;
-        drag.current.pointerId = -1;
+        if (orbDrag.current.pointerId !== event.pointerId) return;
+        const wasMoved = orbDrag.current.moved;
+        orbDrag.current.pointerId = -1;
         try { event.currentTarget.releasePointerCapture(event.pointerId); } catch { /* already released */ }
-        if (!wasMoved) setIsOpen(value => !value);
+        if (!wasMoved) {
+            setPanelPosition(current => clampPanelPosition(current));
+            setIsOpen(value => !value);
+        }
+    };
+
+    const handlePanelPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+        const target = event.target as HTMLElement;
+        if (target.closest('button')) return;
+        panelDrag.current = {
+            pointerId: event.pointerId,
+            offsetX: event.clientX - panelPosition.x,
+            offsetY: event.clientY - panelPosition.y,
+        };
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    const handlePanelPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+        if (panelDrag.current.pointerId !== event.pointerId) return;
+        setPanelPosition(clampPanelPosition({
+            x: event.clientX - panelDrag.current.offsetX,
+            y: event.clientY - panelDrag.current.offsetY,
+        }));
+    };
+
+    const handlePanelPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
+        if (panelDrag.current.pointerId !== event.pointerId) return;
+        panelDrag.current.pointerId = -1;
+        try { event.currentTarget.releasePointerCapture(event.pointerId); } catch { /* already released */ }
     };
 
     const scanMarkets = useCallback(async () => {
@@ -312,7 +390,7 @@ const GlobalAIScanner = ({ openBotBuilder }: { openBotBuilder: () => void }) => 
                 });
             }
 
-            if (!completed.length) throw new Error(failures[0] || 'The scanner could not obtain tick history from any market.');
+            if (!completed.length) throw new Error(failures[0] || 'The scanner could not obtain usable tick history from any market.');
             completed.sort((a, b) => b.confidence - a.confidence || b.recentRate - a.recentRate);
             const best = completed[0];
             setResult(best);
@@ -376,10 +454,22 @@ const GlobalAIScanner = ({ openBotBuilder }: { openBotBuilder: () => void }) => 
                 <span>AI</span>
             </button>
 
-            {isOpen && <section className='prodb-ai-scanner' role='dialog' aria-modal='false' aria-label='Entry Scanner'>
-                <header className='prodb-ai-scanner__header'>
-                    <strong>Entry Scanner</strong>
-                    <button type='button' aria-label='Close scanner' onClick={() => setIsOpen(false)}>×</button>
+            {isOpen && <section
+                className='prodb-ai-scanner'
+                role='dialog'
+                aria-modal='false'
+                aria-label='Entry Scanner'
+                style={{ left: panelPosition.x, top: panelPosition.y, right: 'auto' }}
+            >
+                <header
+                    className='prodb-ai-scanner__header'
+                    title='Drag scanner window'
+                    onPointerDown={handlePanelPointerDown}
+                    onPointerMove={handlePanelPointerMove}
+                    onPointerUp={handlePanelPointerUp}
+                >
+                    <strong><span className='prodb-ai-scanner__drag-dots'>⋮⋮</span> Entry Scanner</strong>
+                    <button type='button' aria-label='Close scanner' onPointerDown={event => event.stopPropagation()} onClick={() => setIsOpen(false)}>×</button>
                 </header>
 
                 <div className='prodb-ai-scanner__body'>
