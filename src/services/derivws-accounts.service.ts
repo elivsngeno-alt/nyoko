@@ -21,6 +21,8 @@ interface OTPResponse {
     };
 }
 
+const ACCOUNTS_STORAGE_KEY = 'deriv_accounts';
+
 /**
  * Handles the current Deriv Options REST -> OTP -> authenticated WebSocket flow.
  * Every authenticated REST request includes both the OAuth Bearer token and
@@ -65,13 +67,22 @@ export class DerivWSAccountsService {
     }
 
     static storeAccounts(accounts: DerivAccount[]): void {
-        sessionStorage.setItem('deriv_accounts', JSON.stringify(accounts));
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+        sessionStorage.removeItem(ACCOUNTS_STORAGE_KEY);
     }
 
     static getStoredAccounts(): DerivAccount[] | null {
         try {
-            const accountsStr = sessionStorage.getItem('deriv_accounts');
-            return accountsStr ? (JSON.parse(accountsStr) as DerivAccount[]) : null;
+            const persistent = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+            const legacy = sessionStorage.getItem(ACCOUNTS_STORAGE_KEY);
+            const raw = persistent || legacy;
+            if (!raw) return null;
+            const accounts = JSON.parse(raw) as DerivAccount[];
+            if (!persistent && legacy) {
+                localStorage.setItem(ACCOUNTS_STORAGE_KEY, legacy);
+                sessionStorage.removeItem(ACCOUNTS_STORAGE_KEY);
+            }
+            return Array.isArray(accounts) ? accounts : null;
         } catch (error) {
             console.error('[DerivWS] Error parsing stored accounts:', error);
             return null;
@@ -83,7 +94,8 @@ export class DerivWSAccountsService {
     }
 
     static clearStoredAccounts(): void {
-        sessionStorage.removeItem('deriv_accounts');
+        localStorage.removeItem(ACCOUNTS_STORAGE_KEY);
+        sessionStorage.removeItem(ACCOUNTS_STORAGE_KEY);
     }
 
     static async fetchAccountsList(accessToken: string): Promise<DerivAccount[]> {
