@@ -96,7 +96,7 @@
 
 .prodb-nav {
     justify-content: flex-start;
-    flex-direction: row-reverse;
+    flex-direction: row;
     padding-left: 0;
     padding-right: 0;
 }
@@ -188,7 +188,7 @@
 
     .prodb-nav {
         justify-content: flex-start;
-        flex-direction: row-reverse;
+        flex-direction: row;
         overflow-x: auto;
         overscroll-behavior-inline: contain;
     }
