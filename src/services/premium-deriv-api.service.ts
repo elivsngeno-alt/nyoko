@@ -4,12 +4,23 @@ import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.servi
 
 type ApiPayload = Record<string, unknown>;
 type ApiResponse = Record<string, any>;
+type ContractUpdateListener = (contract: any) => void;
+
+type TrackedContract = {
+    api: any;
+    observer: { unsubscribe?: () => void } | null;
+    subscriptionId: string;
+    timeoutId: number;
+};
 
 const sleep = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms));
 const unwrap = (value: any): ApiResponse => (value?.data && typeof value.data === 'object' ? value.data : value || {});
 
 export class PremiumDerivApiService {
     private static requestId = 1000;
+    private static contractListeners = new Set<ContractUpdateListener>();
+    private static trackedContracts = new Map<number, TrackedContract>();
+    private static trackingInFlight = new Set<number>();
 
     private static async getApi(): Promise<any> {
         if (!api_base.api) await api_base.init(true);
@@ -29,15 +40,15 @@ export class PremiumDerivApiService {
         return result;
     }
 
-    static async activeSymbols() {
+    static activeSymbols = async () => {
         const result = await this.request({ active_symbols: 'brief' });
         return Array.isArray(result.active_symbols) ? result.active_symbols : [];
-    }
+    };
 
-    static async contractsFor(underlyingSymbol: string) {
+    static contractsFor = async (underlyingSymbol: string) => {
         const result = await this.request({ contracts_for: underlyingSymbol });
         return result.contracts_for || { available: [] };
-    }
+    };
 
     static async ticksHistory(underlyingSymbol: string, count = 1000, style: 'ticks' | 'candles' = 'ticks', granularity?: number) {
         const request: ApiPayload = {
@@ -75,7 +86,7 @@ export class PremiumDerivApiService {
 
         return () => {
             observer.unsubscribe();
-            if (subscriptionId) void api.send({ forget: subscriptionId }).catch?.(() => undefined);
+            if (subscriptionId) void Promise.resolve(api.send({ forget: subscriptionId })).catch(() => undefined);
         };
     }
 
@@ -98,14 +109,109 @@ export class PremiumDerivApiService {
         return result.proposal;
     }
 
+    static isContractClosed(contract: any): boolean {
+        if (!contract) return false;
+        const status = String(contract.status || '').toLowerCase();
+        const terminalStatus = ['won', 'lost', 'sold', 'cancelled', 'canceled', 'expired', 'closed'].includes(status);
+        const exitTime = Number(contract.exit_spot_time ?? contract.exit_tick_time ?? 0);
+        const hasFinalProfit = contract.profit !== undefined && contract.profit !== null && contract.profit !== '';
+        return Boolean(
+            terminalStatus ||
+            contract.is_sold ||
+            contract.is_expired ||
+            contract.is_settleable ||
+            (exitTime > 0 && hasFinalProfit && status !== 'open')
+        );
+    }
+
+    static onContractUpdate(listener: ContractUpdateListener): () => void {
+        this.contractListeners.add(listener);
+        return () => this.contractListeners.delete(listener);
+    }
+
+    private static emitContractUpdate(contract: any) {
+        if (!contract?.contract_id) return;
+        this.contractListeners.forEach(listener => {
+            try {
+                listener(contract);
+            } catch (error) {
+                console.warn('[PremiumDerivAPI] Contract update listener failed:', error);
+            }
+        });
+    }
+
+    private static cleanupTrackedContract(contractId: number) {
+        const tracked = this.trackedContracts.get(contractId);
+        if (!tracked) return;
+        this.trackedContracts.delete(contractId);
+        window.clearTimeout(tracked.timeoutId);
+        try { tracked.observer?.unsubscribe?.(); } catch { /* already disposed */ }
+        if (tracked.subscriptionId) {
+            void Promise.resolve(tracked.api?.send?.({ forget: tracked.subscriptionId })).catch(() => undefined);
+        }
+    }
+
+    static async trackContract(contractId: number): Promise<void> {
+        const id = Math.trunc(Number(contractId));
+        if (!id || this.trackedContracts.has(id) || this.trackingInFlight.has(id)) return;
+        this.trackingInFlight.add(id);
+
+        let api: any;
+        let observer: any = null;
+        try {
+            api = await this.getApi();
+            let subscriptionId = '';
+
+            observer = api.onMessage().subscribe((event: any) => {
+                const message = unwrap(event);
+                if (message?.msg_type !== 'proposal_open_contract') return;
+                const contract = message?.proposal_open_contract;
+                if (Number(contract?.contract_id) !== id) return;
+                subscriptionId = message?.subscription?.id || subscriptionId;
+                const tracked = this.trackedContracts.get(id);
+                if (tracked && subscriptionId) tracked.subscriptionId = subscriptionId;
+                this.emitContractUpdate(contract);
+                if (this.isContractClosed(contract)) this.cleanupTrackedContract(id);
+            });
+
+            const timeoutId = window.setTimeout(() => this.cleanupTrackedContract(id), 10 * 60 * 1000);
+            this.trackedContracts.set(id, { api, observer, subscriptionId: '', timeoutId });
+
+            const response = unwrap(await api.send({
+                proposal_open_contract: 1,
+                contract_id: id,
+                subscribe: 1,
+                req_id: ++this.requestId,
+            }));
+            if (response?.error) throw new Error(response.error.message || response.error.code || 'Unable to track purchased contract.');
+
+            subscriptionId = response?.subscription?.id || subscriptionId;
+            const tracked = this.trackedContracts.get(id);
+            if (tracked && subscriptionId) tracked.subscriptionId = subscriptionId;
+            if (response?.proposal_open_contract) {
+                this.emitContractUpdate(response.proposal_open_contract);
+                if (this.isContractClosed(response.proposal_open_contract)) this.cleanupTrackedContract(id);
+            }
+        } catch (error) {
+            this.cleanupTrackedContract(id);
+            try { observer?.unsubscribe?.(); } catch { /* already disposed */ }
+            console.warn(`[PremiumDerivAPI] Could not attach settlement stream for contract ${id}:`, error instanceof Error ? error.message : error);
+        } finally {
+            this.trackingInFlight.delete(id);
+        }
+    }
+
     static async buy(proposalId: string, maximumPrice: number) {
         const result = await this.request({ buy: proposalId, price: maximumPrice });
         if (!result.buy) throw new Error('Deriv did not return a purchased contract.');
+        const contractId = Math.trunc(Number(result.buy.contract_id || 0));
+        if (contractId > 0) void this.trackContract(contractId);
         return result.buy;
     }
 
     static async sell(contractId: number, price = 0) {
         const result = await this.request({ sell: contractId, price });
+        if (result?.sell) this.emitContractUpdate({ ...result.sell, contract_id: contractId, status: 'sold', is_sold: 1 });
         return result.sell;
     }
 
