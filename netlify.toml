@@ -7,6 +7,12 @@
   NODE_VERSION = "22"
 
 [[redirects]]
+  from = "https://kicktrade.site/*"
+  to = "https://www.kicktrade.site/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/api/oauth/token"
   to = "/.netlify/functions/oauth-token"
   status = 200
