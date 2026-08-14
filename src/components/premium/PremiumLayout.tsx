@@ -8,7 +8,7 @@ import { useStore } from '@/hooks/useStore';
 import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.service';
 import BottomStatusBar from './BottomStatusBar';
 import { getTemplateDomain } from './domain-brand';
-import GlobalAIScanner from './GlobalAIScanner';
+import GlobalAIScannerV2 from './GlobalAIScannerV2';
 import GlobalContractBridge from './GlobalContractBridge';
 import GlobalQuickTrade from './GlobalQuickTrade';
 import LandingPage from './LandingPage';
@@ -48,6 +48,8 @@ import './premium-ai-scanner.scss';
 import './premium-ai-scanner-override.scss';
 import './premium-batch-trader.scss';
 import './premium-speed-bot.scss';
+import './premium-ai-scanner-v2.scss';
+import './premium-execution-fixes.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
@@ -192,7 +194,7 @@ const PremiumLayout = observer(() => {
                 <Outlet />
             </div>
         </main>
-        <GlobalAIScanner openBotBuilder={openBotBuilder} />
+        <GlobalAIScannerV2 openBotBuilder={openBotBuilder} />
         <GlobalQuickTrade hidden={isBotBuilder} />
         {!isBotBuilder && <BottomStatusBar />}
     </div>;
