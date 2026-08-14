@@ -97,9 +97,9 @@
             {
                 "id": "kicktrade",
                 "hosts": ["kicktrade.site", "www.kicktrade.site"],
-                "display_domain": "kicktrade.site",
-                "website_url": "https://kicktrade.site",
-                "redirect_uri": "https://kicktrade.site/callback",
+                "display_domain": "www.kicktrade.site",
+                "website_url": "https://www.kicktrade.site",
+                "redirect_uri": "https://www.kicktrade.site/callback",
                 "client_id": "33vlry53HSLhXICBcUURu",
                 "scopes": ["trade", "application_read"],
                 "environment": "production"
