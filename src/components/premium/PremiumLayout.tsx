@@ -3,7 +3,6 @@ import { observer } from 'mobx-react-lite';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { generateOAuthURL } from '@/components/shared';
 import { DBOT_TABS } from '@/constants/bot-contents';
-import { api_base } from '@/external/bot-skeleton';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.service';
@@ -29,10 +28,10 @@ import {
     QuickBotPage,
     SignalAIPage,
     SourceAnalysisToolsPage,
-    SpeedbotPage,
 } from './pages/ImportedFeaturePages';
 import { ChartsPage } from './pages/LiveTradingPages';
 import PatCopyTradingPage from './pages/PatCopyTradingPage';
+import SpeedBotPage from './pages/SpeedBotPage';
 import type { PremiumSection } from './types';
 import './premium-base.scss';
 import './premium-app.scss';
@@ -48,6 +47,7 @@ import './premium-run-panel-right.scss';
 import './premium-ai-scanner.scss';
 import './premium-ai-scanner-override.scss';
 import './premium-batch-trader.scss';
+import './premium-speed-bot.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
@@ -73,7 +73,8 @@ const PremiumLayout = observer(() => {
     const params = new URLSearchParams(window.location.search);
     const isOAuthCallback = Boolean(params.get('code') && params.get('state'));
     const hasStoredAuth = OAuthTokenExchangeService.isAuthenticated();
-    const isAuthenticated = Boolean(activeLoginid || client?.is_logged_in || hasStoredAuth);
+    const runtimeAuthenticated = Boolean(activeLoginid || client?.is_logged_in);
+    const isAuthenticated = Boolean(runtimeAuthenticated || hasStoredAuth);
 
     useEffect(() => { document.title = getTemplateDomain(); }, []);
 
@@ -82,19 +83,30 @@ const PremiumLayout = observer(() => {
     }, [location.hash]);
 
     useEffect(() => {
-        if (hasBootstrappedSession.current || isOAuthCallback || !hasStoredAuth || activeLoginid || client?.is_logged_in) return;
+        if (hasBootstrappedSession.current || isOAuthCallback || !hasStoredAuth || runtimeAuthenticated) return;
         hasBootstrappedSession.current = true;
-        api_base.init(true).catch(error => {
-            hasBootstrappedSession.current = false;
-            console.error('Failed to restore authenticated Deriv session:', error);
-        });
-    }, [activeLoginid, client?.is_logged_in, hasStoredAuth, isOAuthCallback]);
+        setIsAuthorizing(true);
+
+        void OAuthTokenExchangeService.restoreSession()
+            .then(restored => {
+                if (!restored) {
+                    hasBootstrappedSession.current = false;
+                    setAuthProbe(value => value + 1);
+                }
+            })
+            .catch(error => {
+                hasBootstrappedSession.current = false;
+                console.error('Failed to restore authenticated Deriv session:', error);
+                setAuthProbe(value => value + 1);
+            })
+            .finally(() => setIsAuthorizing(false));
+    }, [hasStoredAuth, isOAuthCallback, runtimeAuthenticated, setIsAuthorizing]);
 
     useEffect(() => {
-        if ((!isOAuthCallback && !isAuthorizing) || isAuthenticated) return;
+        if ((!isOAuthCallback && !isAuthorizing) || runtimeAuthenticated) return;
         const timer = window.setInterval(() => setAuthProbe(value => value + 1), 500);
         return () => window.clearInterval(timer);
-    }, [isAuthenticated, isOAuthCallback, isAuthorizing]);
+    }, [runtimeAuthenticated, isOAuthCallback, isAuthorizing]);
 
     const activateNativeBotBuilder = useCallback(() => {
         dashboard?.setActiveTab(DBOT_TABS.BOT_BUILDER);
@@ -141,7 +153,7 @@ const PremiumLayout = observer(() => {
         if (next === 'bot_builder') activateNativeBotBuilder();
     }, [activateNativeBotBuilder, location.pathname, location.search, navigate]);
 
-    if (!isAuthenticated && (isOAuthCallback || isAuthorizing)) return <PremiumLoader />;
+    if (!runtimeAuthenticated && (isOAuthCallback || isAuthorizing || hasStoredAuth)) return <PremiumLoader />;
     if (!isAuthenticated) return <LandingPage onLogin={() => startOAuth()} onSignup={() => startOAuth('registration')} busy={isAuthorizing} />;
 
     const openBotBuilder = () => changeSection('bot_builder');
@@ -158,7 +170,7 @@ const PremiumLayout = observer(() => {
             case 'bulk_trader': return <BulkTraderPage />;
             case 'batch_trader': return <BatchTraderPage />;
             case 'copy_trading': return <PatCopyTradingPage />;
-            case 'speedbot': return <SpeedbotPage />;
+            case 'speedbot': return <SpeedBotPage />;
             case 'pro_ai': return <ProAIPage />;
             case 'analysis_tools': return <AnalysisToolsPage />;
             case 'analysis_hub': return <SourceAnalysisToolsPage />;
