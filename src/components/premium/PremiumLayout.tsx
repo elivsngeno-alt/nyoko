@@ -17,6 +17,7 @@ import PremiumLoader from './PremiumLoader';
 import AnalysisToolsPage from './pages/AnalysisToolsPage';
 import BatchTraderPage from './pages/BatchTraderPage';
 import BulkTraderPage from './pages/BulkTraderPage';
+import CalculatorPage from './pages/CalculatorPage';
 import DashboardHome from './pages/DashboardHome';
 import FreeBotsPage from './pages/FreeBotsPage';
 import {
@@ -50,10 +51,11 @@ import './premium-batch-trader.scss';
 import './premium-speed-bot.scss';
 import './premium-ai-scanner-v2.scss';
 import './premium-execution-fixes.scss';
+import './premium-calculator.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
-    'manual_trading', 'bulk_trader', 'batch_trader', 'copy_trading', 'speedbot', 'pro_ai', 'analysis_tools',
+    'manual_trading', 'bulk_trader', 'batch_trader', 'copy_trading', 'speedbot', 'calculator', 'pro_ai', 'analysis_tools',
     'analysis_hub', 'charts', 'dtrader',
 ];
 
@@ -173,6 +175,7 @@ const PremiumLayout = observer(() => {
             case 'batch_trader': return <BatchTraderPage />;
             case 'copy_trading': return <PatCopyTradingPage />;
             case 'speedbot': return <SpeedBotPage />;
+            case 'calculator': return <CalculatorPage />;
             case 'pro_ai': return <ProAIPage />;
             case 'analysis_tools': return <AnalysisToolsPage />;
             case 'analysis_hub': return <SourceAnalysisToolsPage />;
