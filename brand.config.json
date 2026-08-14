@@ -20,8 +20,8 @@
                 "environment": "production",
                 "bot_library": {
                     "title": "Free Bots",
-                    "manifest_url": "https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site/bots.json",
-                    "base_url": "https://raw.githubusercontent.com/DukeNyamasege/new-user-interface/main/public/riskmanagers.site"
+                    "manifest_url": "/free-bots/bots.json",
+                    "base_url": "/free-bots"
                 }
             }
         ]
