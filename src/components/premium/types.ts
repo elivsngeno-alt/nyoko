@@ -8,6 +8,7 @@ export type PremiumSection =
     | 'auto_trader'
     | 'manual_trading'
     | 'bulk_trader'
+    | 'batch_trader'
     | 'copy_trading'
     | 'speedbot'
     | 'pro_ai'
