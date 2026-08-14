@@ -10,6 +10,7 @@ const navItems: Array<{ id: PremiumSection; label: string; Icon: typeof HomeIcon
     { id: 'bot_builder', label: 'Bot Builder', Icon: GearIcon },
     { id: 'free_bots', label: 'Free Bots', Icon: RobotIcon },
     { id: 'bulk_trader', label: 'Bulk Trader', Icon: GridIcon },
+    { id: 'batch_trader', label: 'Batch Trader', Icon: GridIcon },
     { id: 'copy_trading', label: 'Copy Trading', Icon: CopyIcon },
     { id: 'analysis_tools', label: 'Analysis Tool', Icon: SearchIcon },
 ];
