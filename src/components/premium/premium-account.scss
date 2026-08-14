@@ -35,14 +35,7 @@
     box-shadow: none;
 }
 
-.prodb-api-account-icon__currency {
-    display: block;
-    font-size: 24px;
-    line-height: 1;
-    transform: translateY(-1px);
-}
-
-.prodb-api-account-icon__demo-svg {
+.prodb-api-account-icon > svg {
     width: 28px;
     height: 28px;
     display: block;
