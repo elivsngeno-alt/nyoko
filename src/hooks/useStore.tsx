@@ -31,7 +31,11 @@ const StoreProvider: React.FC<TStoreProvider> = ({ children, mockStore }) => {
         }
     }, [store, mockStore]);
 
-    if (!store && mockStore) return null;
+    // RootStore is created in an effect, so there is always one initial render
+    // where the context value would otherwise be null. Never render consumers
+    // during that window: many DBot components legitimately assume useStore()
+    // returns a ready RootStore and destructure it immediately.
+    if (!store) return null;
 
     return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 };

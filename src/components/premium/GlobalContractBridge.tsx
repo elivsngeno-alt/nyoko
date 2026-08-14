@@ -12,11 +12,13 @@ const unwrapMessage = (event: any) => event?.data && typeof event.data === 'obje
  */
 const GlobalContractBridge = () => {
     const { activeLoginid, connectionStatus } = useApiBase();
-    const { client, transactions } = useStore();
+    const store = useStore();
+    const client = store?.client;
+    const transactions = store?.transactions;
     const loginid = client?.loginid || activeLoginid || '';
 
     useEffect(() => {
-        if (!loginid || !api_base.api) return;
+        if (!transactions || !loginid || !api_base.api) return;
 
         let cancelled = false;
         const api = api_base.api;
