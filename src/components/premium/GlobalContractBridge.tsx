@@ -6,9 +6,37 @@ import { PremiumDerivApiService } from '@/services/premium-deriv-api.service';
 
 const unwrapMessage = (event: any) => event?.data && typeof event.data === 'object' ? event.data : event || {};
 
+const normalizeContract = (contract: any) => {
+    if (!contract || !contract.contract_id) return contract;
+    const exitTime = contract.exit_tick_time ?? contract.exit_spot_time;
+    const entryTime = contract.entry_tick_time ?? contract.entry_spot_time;
+    const currentStatus = String(contract.status || '').toLowerCase();
+    const hasFinalProfit = contract.profit !== undefined && contract.profit !== null && contract.profit !== '';
+    const terminal = PremiumDerivApiService.isContractClosed(contract);
+    let status = contract.status;
+
+    // Some current Options responses can carry the final exit/profit fields
+    // before legacy DBot's status helpers recognise the contract as complete.
+    // Normalise those fields so the native TransactionsStore marks the row
+    // completed instead of leaving a settled one-tick trade looking open.
+    if (terminal && (!currentStatus || currentStatus === 'open')) {
+        const profit = Number(contract.profit || 0);
+        status = profit > 0 ? 'won' : 'lost';
+    }
+
+    return {
+        ...contract,
+        status,
+        exit_tick_time: exitTime,
+        entry_tick_time: entryTime,
+        exit_tick: contract.exit_tick ?? contract.exit_spot,
+        is_expired: contract.is_expired || (terminal && hasFinalProfit ? 1 : 0),
+    };
+};
+
 /**
  * Keeps the native DBot transaction store in sync with the authenticated
- * Deriv account, regardless of which PROD B TRADER tool placed the trade.
+ * Deriv account, regardless of which premium tool placed the trade.
  */
 const GlobalContractBridge = () => {
     const { activeLoginid, connectionStatus } = useApiBase();
@@ -23,8 +51,9 @@ const GlobalContractBridge = () => {
         let cancelled = false;
         const api = api_base.api;
 
-        const pushContract = (contract: any) => {
-            if (cancelled || !contract?.contract_id) return;
+        const pushContract = (rawContract: any) => {
+            if (cancelled || !rawContract?.contract_id) return;
+            const contract = normalizeContract(rawContract);
             try {
                 transactions.onBotContractEvent(contract);
             } catch (error) {
@@ -43,9 +72,13 @@ const GlobalContractBridge = () => {
             if (message?.msg_type === 'proposal_open_contract') pushContract(message.proposal_open_contract);
         });
 
-        // Recover any contracts that were already open before this listener mounted.
-        // Portfolio intentionally returns open positions only; POC then supplies the
-        // detailed contract shape expected by the native Run Panel transaction cards.
+        // PremiumDerivApiService attaches a dedicated contract-id subscription
+        // immediately after every premium buy. Listen to that channel too so
+        // the final settled update cannot be missed by the broad account stream.
+        const disposePremiumUpdates = PremiumDerivApiService.onContractUpdate(pushContract);
+
+        // Recover contracts that were already open before this listener mounted,
+        // then attach a dedicated settlement stream to each recovered position.
         void PremiumDerivApiService.portfolio()
             .then(async portfolio => {
                 const contracts = Array.isArray(portfolio?.contracts) ? portfolio.contracts : [];
@@ -54,6 +87,7 @@ const GlobalContractBridge = () => {
                     if (!Number.isFinite(contractId) || !contractId) return;
                     const response = await PremiumDerivApiService.request({ proposal_open_contract: 1, contract_id: contractId });
                     pushContract(response?.proposal_open_contract);
+                    await PremiumDerivApiService.trackContract(contractId);
                 }));
             })
             .catch(error => {
@@ -63,6 +97,7 @@ const GlobalContractBridge = () => {
         return () => {
             cancelled = true;
             observer?.unsubscribe?.();
+            disposePremiumUpdates();
         };
     }, [connectionStatus, loginid, transactions]);
 
