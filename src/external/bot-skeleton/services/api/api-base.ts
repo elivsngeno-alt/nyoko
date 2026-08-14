@@ -70,15 +70,29 @@ class APIBase {
     private readonly ENRICHMENT_TIMEOUT_MS = 10000; // 10 seconds
     private readonly MAX_RECONNECTION_ATTEMPTS = 5; // Maximum number of reconnection attempts before session reset
 
+    private formatSubscriptionError(error: any) {
+        return error?.error?.message || error?.error?.code || error?.message || String(error);
+    }
+
     unsubscribeAllSubscriptions = () => {
         this.current_auth_subscriptions?.forEach(subscription_promise => {
-            subscription_promise.then(({ subscription }) => {
-                if (subscription?.id) {
-                    this.api?.send({
-                        forget: subscription.id,
-                    });
-                }
-            });
+            subscription_promise
+                .then(({ subscription }) => {
+                    if (subscription?.id) {
+                        const forget = this.api?.send({
+                            forget: subscription.id,
+                        });
+                        Promise.resolve(forget).catch(error => {
+                            console.warn('[APIBase] Failed to forget subscription:', this.formatSubscriptionError(error));
+                        });
+                    }
+                })
+                .catch(error => {
+                    // A stream may reject while the socket/account is being regenerated.
+                    // Cleanup must consume that rejection rather than leaking a raw
+                    // Deriv response as "Uncaught (in promise) Object".
+                    console.warn('[APIBase] Subscription ended before cleanup:', this.formatSubscriptionError(error));
+                });
         });
         this.current_auth_subscriptions = [];
     };
@@ -247,7 +261,9 @@ class APIBase {
                 localStorage.removeItem('clientAccounts');
             }
 
-            this.init(true);
+            void this.init(true).catch(error => {
+                console.error('[APIBase] Reconnection failed:', this.formatSubscriptionError(error));
+            });
         }
     };
 
@@ -355,7 +371,13 @@ class APIBase {
             } else {
                 this.active_symbols_promise = this.getActiveSymbols();
             }
-            this.subscribe();
+
+            void this.subscribe().catch(error => {
+                // Do not let one rejected authenticated stream escape as a raw
+                // unhandled promise. The socket remains usable and the failure is
+                // reported with a readable Deriv message for diagnosis.
+                console.error('[APIBase] Authenticated stream setup failed:', this.formatSubscriptionError(error));
+            });
         } catch (e) {
             this.is_authorized = false;
             clearAuthData();
@@ -386,8 +408,16 @@ class APIBase {
         };
 
         const streamsToSubscribe = ['balance', 'transaction', 'proposal_open_contract'];
+        const results = await Promise.allSettled(streamsToSubscribe.map(subscribeToStream));
 
-        await Promise.all(streamsToSubscribe.map(subscribeToStream));
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.warn(
+                    `[APIBase] ${streamsToSubscribe[index]} subscription failed:`,
+                    this.formatSubscriptionError(result.reason)
+                );
+            }
+        });
     }
 
     getActiveSymbols = async () => {
