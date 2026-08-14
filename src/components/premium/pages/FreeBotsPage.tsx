@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getCurrentSiteConfig } from '@/config/site-registry';
 import { load, save_types } from '@/external/bot-skeleton';
 import { DownloadIcon } from '../icons';
@@ -68,9 +68,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         return () => { alive = false; };
     }, [library?.manifest_url]);
 
-    const title = library?.title || 'Free Bots';
     const baseUrl = library?.base_url || (library?.manifest_url ? library.manifest_url.replace(/\/[^/]*$/, '') : '');
-    const configuredCount = useMemo(() => bots.length, [bots]);
 
     const loadBot = async (bot: DomainBot) => {
         if (!openBotBuilder || !baseUrl) return;
@@ -101,14 +99,9 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     };
 
     return <div className='prodb-free-bots'>
-        <div className='prodb-domain-library-head'>
-            <div><span>DOMAIN BOT LIBRARY</span><h1>{title}</h1><p>{domain} · {configuredCount} configured bot{configuredCount === 1 ? '' : 's'}</p></div>
-            <small>Each site entry in brand.config.json can point to its own manifest and bot files.</small>
-        </div>
-
-        {loading && <div className='prodb-live-empty'>Loading bots configured for {domain}…</div>}
+        {loading && <div className='prodb-live-empty'>Loading bots…</div>}
         {error && <div className='prodb-live-error'>{error}</div>}
-        {!loading && !error && bots.length === 0 && <div className='prodb-live-empty'>No free bots have been configured for {domain} yet.</div>}
+        {!loading && !error && bots.length === 0 && <div className='prodb-live-empty'>No free bots are available yet.</div>}
 
         <div className='prodb-bot-grid prodb-bot-grid--imported'>
             {bots.map(bot => {
