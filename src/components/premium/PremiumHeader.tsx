@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import BrandMark from './BrandMark';
 import PremiumAccountSwitcher from './PremiumAccountSwitcher';
-import { CopyIcon, GearIcon, GridIcon, HomeIcon, RobotIcon, SearchIcon } from './icons';
+import { CalculatorIcon, CopyIcon, GearIcon, GridIcon, HomeIcon, RobotIcon, SearchIcon } from './icons';
 import PremiumTicker from './PremiumTicker';
 import type { PremiumSection } from './types';
 
@@ -14,6 +14,7 @@ const navItems: Array<{ id: PremiumSection; label: string; Icon: typeof HomeIcon
     { id: 'speedbot', label: 'Speed Bot', Icon: GridIcon },
     { id: 'copy_trading', label: 'Copy Trading', Icon: CopyIcon },
     { id: 'analysis_tools', label: 'Analysis Tool', Icon: SearchIcon },
+    { id: 'calculator', label: 'Calculator', Icon: CalculatorIcon },
 ];
 
 const PremiumHeader = observer(({ active, onChange }: { active: PremiumSection; onChange: (section: PremiumSection) => void }) => (
