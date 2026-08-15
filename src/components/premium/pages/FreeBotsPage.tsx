@@ -52,9 +52,15 @@ const decodeGzipBase64 = async (encoded: string): Promise<string> => {
 const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     const site = getCurrentSiteConfig();
     const domain = getTemplateDomain();
-    // Every configured domain uses the shared uploaded-bot library unless it explicitly
-    // provides another library. This keeps the same curated list on all client sites.
-    const library = site.bot_library ?? SHARED_BOT_LIBRARY;
+    const configuredLibrary = site.bot_library;
+    // All domains share the uploaded-bot library. A site can still override the paths,
+    // but missing library fields always fall back to the shared public collection.
+    const manifestUrl = configuredLibrary?.manifest_url || SHARED_BOT_LIBRARY.manifest_url;
+    const baseUrl =
+        configuredLibrary?.base_url ||
+        (configuredLibrary?.manifest_url
+            ? configuredLibrary.manifest_url.replace(/\/[^/]*$/, '')
+            : SHARED_BOT_LIBRARY.base_url);
     const [bots, setBots] = useState<DomainBot[]>([]);
     const [loading, setLoading] = useState(true);
     const [busyFile, setBusyFile] = useState('');
@@ -66,7 +72,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
             setLoading(true);
             setError('');
             try {
-                const response = await fetch(library.manifest_url, { cache: 'no-store' });
+                const response = await fetch(manifestUrl, { cache: 'no-store' });
                 if (!response.ok) throw new Error(`Bot manifest returned HTTP ${response.status}.`);
                 const manifest = await response.json();
                 const items = Array.isArray(manifest) ? manifest : Array.isArray(manifest?.bots) ? manifest.bots : [];
@@ -83,9 +89,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         };
         void loadManifest();
         return () => { alive = false; };
-    }, [library.manifest_url]);
-
-    const baseUrl = library.base_url || library.manifest_url.replace(/\/[^/]*$/, '');
+    }, [manifestUrl]);
 
     const loadBot = async (bot: DomainBot) => {
         if (!openBotBuilder || !baseUrl) return;
