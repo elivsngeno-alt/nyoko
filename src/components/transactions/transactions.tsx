@@ -87,7 +87,6 @@ const Transactions = observer(({ is_drawer_open }: TTransactions) => {
     };
 
     const onClickTransaction = (transaction_id: null | number) => {
-        // Toggle transaction popover if passed transaction_id is the same.
         if (transaction_id && active_transaction_id === transaction_id) {
             setActiveTransactionId(null);
         } else {
@@ -138,6 +137,7 @@ const Transactions = observer(({ is_drawer_open }: TTransactions) => {
                         <DataList
                             className='transactions'
                             data_source={transaction_list}
+                            is_mobile={!isDesktop}
                             rowRenderer={props => (
                                 <TransactionItem
                                     onClickTransaction={onClickTransaction}
