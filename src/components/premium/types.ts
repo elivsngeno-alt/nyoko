@@ -17,4 +17,4 @@ export type PremiumSection =
     | 'analysis_hub'
     | 'charts'
     | 'dtrader'
-    | 'deposit_stock_withdraw';
+    | 'deposit_withdraw';

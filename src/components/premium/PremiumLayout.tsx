@@ -57,11 +57,13 @@ import './premium-wallet.scss';
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
     'manual_trading', 'bulk_trader', 'batch_trader', 'copy_trading', 'speedbot', 'calculator', 'pro_ai', 'analysis_tools',
-    'analysis_hub', 'charts', 'dtrader', 'deposit_stock_withdraw',
+    'analysis_hub', 'charts', 'dtrader', 'deposit_withdraw',
 ];
 
 const sectionFromHash = (hash: string): PremiumSection => {
-    const value = hash.replace(/^#\/?/, '').split('?')[0] as PremiumSection;
+    const rawValue = hash.replace(/^#\/?/, '').split('?')[0];
+    // Keep old links working after the navigation label/route rename.
+    const value = (rawValue === 'deposit_stock_withdraw' ? 'deposit_withdraw' : rawValue) as PremiumSection;
     return validSections.includes(value) ? value : 'dashboard';
 };
 
@@ -182,10 +184,10 @@ const PremiumLayout = observer(() => {
             case 'analysis_hub': return <SourceAnalysisToolsPage />;
             case 'charts': return <ChartsPage />;
             case 'dtrader': return <DTraderPage />;
-            case 'deposit_stock_withdraw': return (
-                <section className='prodb-wallet-frame' aria-label='Deposit, Stock, Withdraw'>
+            case 'deposit_withdraw': return (
+                <section className='prodb-wallet-frame' aria-label='Deposit/Withdraw'>
                     <iframe
-                        title='Deposit, Stock, Withdraw'
+                        title='Deposit/Withdraw'
                         src='https://app.surfcashfx.com'
                         allow='clipboard-read; clipboard-write; payment'
                         referrerPolicy='strict-origin-when-cross-origin'
