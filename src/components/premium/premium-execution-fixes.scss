@@ -4,7 +4,7 @@
     .prodb-premium-shell .prodb-bot-builder-host .main__run-strategy-wrapper,
     .prodb-premium-shell .prodb-bot-builder-host.is-hidden .main__run-strategy-wrapper {
         position: fixed !important;
-        top: 136px !important;
+        top: 134px !important;
         right: 22px !important;
         left: auto !important;
         width: auto !important;
@@ -17,9 +17,21 @@
         z-index: 215 !important;
     }
 
+    /* Keep the Run/Stop control directly above the Run Panel. The control is
+     * 40px tall, so the panel starts 6px below it instead of forcing the
+     * control to jump to the left whenever the drawer opens. */
     .prodb-premium-shell--run-open .prodb-bot-builder-host .main__run-strategy-wrapper,
     .prodb-premium-shell--run-open .prodb-bot-builder-host.is-hidden .main__run-strategy-wrapper {
-        right: 382px !important;
+        right: 22px !important;
+    }
+
+    .prodb-premium-shell .prodb-bot-builder-host .run-panel__container,
+    .prodb-premium-shell .prodb-bot-builder-host .dc-drawer.run-panel {
+        top: 180px !important;
+    }
+
+    .prodb-premium-shell .prodb-bot-builder-host .run-panel__container {
+        height: calc(100vh - 180px) !important;
     }
 
     .prodb-premium-shell .prodb-bot-builder-host .main__run-strategy-wrapper > .toolbar__section,
