@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
 import { getCurrentSiteConfig } from '@/config/site-registry';
 import { load, save_types } from '@/external/bot-skeleton';
-import { DownloadIcon } from '../icons';
 import { getTemplateDomain } from '../domain-brand';
+import { DownloadIcon } from '../icons';
 
 type DomainBot = {
     id?: string;
     name?: string;
     title?: string;
     file: string;
+    asset?: string;
+    encoding?: 'gzip-base64';
     description?: string;
     emoji?: string;
     is_premium?: boolean;
     priority?: number;
     guide?: string;
+};
+
+const SHARED_BOT_LIBRARY = {
+    title: 'Free Bots',
+    manifest_url: '/free-bots/bots.json',
+    base_url: '/free-bots',
 };
 
 const waitForWorkspace = async () => {
@@ -25,12 +33,28 @@ const waitForWorkspace = async () => {
     throw new Error('Bot Builder workspace is not ready. Open Bot Builder and try again.');
 };
 
-const joinUrl = (base: string, file: string) => `${base.replace(/\/$/, '')}/${encodeURIComponent(file)}`;
+const joinUrl = (base: string, file: string) =>
+    `${base.replace(/\/$/, '')}/${file.split('/').map(segment => encodeURIComponent(segment)).join('/')}`;
+
+const decodeGzipBase64 = async (encoded: string): Promise<string> => {
+    const binary = window.atob(encoded.trim());
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+    const DecompressionStreamCtor = (window as any).DecompressionStream;
+
+    if (!DecompressionStreamCtor) {
+        throw new Error('This browser cannot decompress bot assets. Please update your browser and try again.');
+    }
+
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStreamCtor('gzip'));
+    return new Response(stream).text();
+};
 
 const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     const site = getCurrentSiteConfig();
     const domain = getTemplateDomain();
-    const library = site.bot_library;
+    // Every configured domain uses the shared uploaded-bot library unless it explicitly
+    // provides another library. This keeps the same curated list on all client sites.
+    const library = site.bot_library ?? SHARED_BOT_LIBRARY;
     const [bots, setBots] = useState<DomainBot[]>([]);
     const [loading, setLoading] = useState(true);
     const [busyFile, setBusyFile] = useState('');
@@ -41,13 +65,6 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         const loadManifest = async () => {
             setLoading(true);
             setError('');
-            if (!library?.manifest_url) {
-                if (alive) {
-                    setBots([]);
-                    setLoading(false);
-                }
-                return;
-            }
             try {
                 const response = await fetch(library.manifest_url, { cache: 'no-store' });
                 if (!response.ok) throw new Error(`Bot manifest returned HTTP ${response.status}.`);
@@ -66,19 +83,24 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         };
         void loadManifest();
         return () => { alive = false; };
-    }, [library?.manifest_url]);
+    }, [library.manifest_url]);
 
-    const baseUrl = library?.base_url || (library?.manifest_url ? library.manifest_url.replace(/\/[^/]*$/, '') : '');
+    const baseUrl = library.base_url || library.manifest_url.replace(/\/[^/]*$/, '');
 
     const loadBot = async (bot: DomainBot) => {
         if (!openBotBuilder || !baseUrl) return;
         setBusyFile(bot.file);
         setError('');
         try {
-            const response = await fetch(joinUrl(baseUrl, bot.file));
-            if (!response.ok) throw new Error(`Could not fetch ${bot.file} (HTTP ${response.status}).`);
-            const xml = await response.text();
-            if (!xml.includes('<xml') && !xml.includes('<block')) throw new Error(`${bot.file} is not a Blockly XML bot.`);
+            const assetFile = bot.asset || bot.file;
+            const response = await fetch(joinUrl(baseUrl, assetFile), { cache: 'no-store' });
+            if (!response.ok) throw new Error(`Could not fetch ${assetFile} (HTTP ${response.status}).`);
+
+            const payload = await response.text();
+            const xml = bot.encoding === 'gzip-base64' ? await decodeGzipBase64(payload) : payload;
+            if (!xml.includes('<xml') && !xml.includes('<block')) {
+                throw new Error(`${bot.file} is not a Blockly XML bot.`);
+            }
 
             openBotBuilder();
             const workspace = await waitForWorkspace();
