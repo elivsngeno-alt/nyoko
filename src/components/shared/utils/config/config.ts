@@ -103,19 +103,77 @@ const generateCodeChallenge = async (verifier: string): Promise<string> => {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 };
 
+// OAuth may start on www.example.site while Deriv redirects to example.site/callback.
+// sessionStorage is origin-specific, so keep a short-lived cookie fallback scoped to the
+// site's parent host. This preserves the PKCE verifier and CSRF state across www/non-www
+// aliases without making them persistent credentials.
+const OAUTH_TRANSIENT_TTL_SECONDS = 600;
+
+const getOAuthCookieDomain = (): string => {
+    try {
+        const site = resolveSiteConfig();
+        const configuredHost = site ? new URL(site.website_url).hostname : window.location.hostname;
+        return configuredHost.replace(/^www\./i, '');
+    } catch {
+        return typeof window !== 'undefined' ? window.location.hostname.replace(/^www\./i, '') : '';
+    }
+};
+
+const readOAuthCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+
+    const prefix = `${name}=`;
+    const cookie = document.cookie
+        .split(';')
+        .map(part => part.trim())
+        .find(part => part.startsWith(prefix));
+
+    if (!cookie) return null;
+
+    try {
+        return decodeURIComponent(cookie.slice(prefix.length));
+    } catch {
+        return cookie.slice(prefix.length);
+    }
+};
+
+const writeOAuthCookie = (name: string, value: string): void => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    const domain = getOAuthCookieDomain();
+    const domainPart = domain && !isLocal() ? `; Domain=${domain}` : '';
+    const securePart = window.location.protocol === 'https:' ? '; Secure' : '';
+
+    document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${OAUTH_TRANSIENT_TTL_SECONDS}; SameSite=Lax${securePart}${domainPart}`;
+};
+
+const clearOAuthCookie = (name: string): void => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    const domain = getOAuthCookieDomain();
+    const domainPart = domain && !isLocal() ? `; Domain=${domain}` : '';
+    const securePart = window.location.protocol === 'https:' ? '; Secure' : '';
+
+    document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax${securePart}${domainPart}`;
+};
+
 const storeCodeVerifier = (verifier: string): void => {
+    const timestamp = Date.now().toString();
     sessionStorage.setItem('oauth_code_verifier', verifier);
-    sessionStorage.setItem('oauth_code_verifier_timestamp', Date.now().toString());
+    sessionStorage.setItem('oauth_code_verifier_timestamp', timestamp);
+    writeOAuthCookie('oauth_code_verifier', verifier);
+    writeOAuthCookie('oauth_code_verifier_timestamp', timestamp);
 };
 
 export const getCodeVerifier = (): string | null => {
-    const verifier = sessionStorage.getItem('oauth_code_verifier');
-    const timestamp = sessionStorage.getItem('oauth_code_verifier_timestamp');
+    const verifier = sessionStorage.getItem('oauth_code_verifier') || readOAuthCookie('oauth_code_verifier');
+    const timestamp =
+        sessionStorage.getItem('oauth_code_verifier_timestamp') || readOAuthCookie('oauth_code_verifier_timestamp');
 
     if (!verifier || !timestamp) return null;
 
     const verifierAge = Date.now() - parseInt(timestamp, 10);
-    if (verifierAge > 600000) {
+    if (!Number.isFinite(verifierAge) || verifierAge > OAUTH_TRANSIENT_TTL_SECONDS * 1000) {
         clearCodeVerifier();
         return null;
     }
@@ -126,21 +184,27 @@ export const getCodeVerifier = (): string | null => {
 export const clearCodeVerifier = (): void => {
     sessionStorage.removeItem('oauth_code_verifier');
     sessionStorage.removeItem('oauth_code_verifier_timestamp');
+    clearOAuthCookie('oauth_code_verifier');
+    clearOAuthCookie('oauth_code_verifier_timestamp');
 };
 
 const storeCSRFToken = (token: string): void => {
+    const timestamp = Date.now().toString();
     sessionStorage.setItem('oauth_csrf_token', token);
-    sessionStorage.setItem('oauth_csrf_token_timestamp', Date.now().toString());
+    sessionStorage.setItem('oauth_csrf_token_timestamp', timestamp);
+    writeOAuthCookie('oauth_csrf_token', token);
+    writeOAuthCookie('oauth_csrf_token_timestamp', timestamp);
 };
 
 export const validateCSRFToken = (token: string): boolean => {
-    const storedToken = sessionStorage.getItem('oauth_csrf_token');
-    const timestamp = sessionStorage.getItem('oauth_csrf_token_timestamp');
+    const storedToken = sessionStorage.getItem('oauth_csrf_token') || readOAuthCookie('oauth_csrf_token');
+    const timestamp =
+        sessionStorage.getItem('oauth_csrf_token_timestamp') || readOAuthCookie('oauth_csrf_token_timestamp');
 
     if (!storedToken || !timestamp || storedToken !== token) return false;
 
     const tokenAge = Date.now() - parseInt(timestamp, 10);
-    if (tokenAge > 600000) {
+    if (!Number.isFinite(tokenAge) || tokenAge > OAUTH_TRANSIENT_TTL_SECONDS * 1000) {
         clearCSRFToken();
         return false;
     }
@@ -151,6 +215,8 @@ export const validateCSRFToken = (token: string): boolean => {
 export const clearCSRFToken = (): void => {
     sessionStorage.removeItem('oauth_csrf_token');
     sessionStorage.removeItem('oauth_csrf_token_timestamp');
+    clearOAuthCookie('oauth_csrf_token');
+    clearOAuthCookie('oauth_csrf_token_timestamp');
 };
 
 /**
