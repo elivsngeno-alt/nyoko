@@ -22,7 +22,12 @@ const clearLocalStorage = (): void => {
 };
 
 /**
- * Clears all cookies for the current domain and parent domains
+ * Clears all non-OAuth cookies for the current domain and parent domains.
+ *
+ * The OAuth PKCE verifier/state cookies are intentionally preserved here. They are
+ * short-lived (10 minutes) and are removed by the OAuth flow itself after use. Clearing
+ * them during app bootstrap would make a valid Deriv callback look unauthenticated,
+ * especially when login starts on www.example.site and returns to example.site/callback.
  */
 const clearCookies = (): void => {
     try {
@@ -36,16 +41,16 @@ const clearCookies = (): void => {
 
         cookies.forEach(cookie => {
             const cookieName = cookie.split('=')[0].trim();
-            if (cookieName) {
-                // Remove cookie for different domain and path combinations
-                domains.forEach(domain => {
-                    paths.forEach(path => {
-                        Cookies.remove(cookieName, { domain, path });
-                    });
+            if (!cookieName || cookieName.startsWith('oauth_')) return;
+
+            // Remove cookie for different domain and path combinations
+            domains.forEach(domain => {
+                paths.forEach(path => {
+                    Cookies.remove(cookieName, { domain, path });
                 });
-                // Also try removing without domain/path
-                Cookies.remove(cookieName);
-            }
+            });
+            // Also try removing without domain/path
+            Cookies.remove(cookieName);
         });
     } catch (error) {
         console.error('Error clearing cookies:', error);
@@ -85,18 +90,36 @@ const isVersionValid = (): boolean => {
     }
 };
 
+const isOAuthCallback = (): boolean => {
+    if (typeof window === 'undefined') return false;
+
+    const params = new URLSearchParams(window.location.search);
+    return Boolean(params.get('code') || params.get('state') || params.get('error'));
+};
+
 /**
- * Performs version check and clears storage if necessary
- * This function should be called at the very beginning of app initialization
- * before any other localStorage or cookie operations
+ * Performs version check and clears storage if necessary.
+ * This function is called at the very beginning of app initialization.
+ *
+ * OAuth callbacks are a special case: never clear callback state before React has
+ * validated it and exchanged the authorization code. When the callback arrives on a
+ * different www/non-www alias, that host may not have a bot_version entry yet even
+ * though the login was started correctly on the sibling host. In that case we simply
+ * initialise the version marker and allow OAuth processing to continue.
  */
 export const performVersionCheck = (): void => {
     console.log('Performing bot version check...');
 
-    if (!isVersionValid()) {
-        console.log('Bot version mismatch or not set. Clearing localStorage and cookies...');
+    if (isOAuthCallback()) {
+        if (!isVersionValid()) setBotVersion();
+        console.log('OAuth callback detected. Preserving PKCE/state during version bootstrap.');
+        return;
+    }
 
-        // Clear all storage
+    if (!isVersionValid()) {
+        console.log('Bot version mismatch or not set. Clearing localStorage and non-OAuth cookies...');
+
+        // Clear all non-OAuth storage
         clearLocalStorage();
         clearCookies();
 
