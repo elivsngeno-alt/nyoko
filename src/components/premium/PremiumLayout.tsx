@@ -45,6 +45,7 @@ import './premium-account.scss';
 import './premium-global-trading.scss';
 import './premium-mobile-shell.scss';
 import './premium-run-panel-right.scss';
+import './premium-run-panel-mobile-history.scss';
 import './premium-ai-scanner.scss';
 import './premium-ai-scanner-override.scss';
 import './premium-batch-trader.scss';
