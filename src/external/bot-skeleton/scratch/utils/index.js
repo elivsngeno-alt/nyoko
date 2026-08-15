@@ -44,6 +44,27 @@ export const getSelectedTradeType = (workspace = window.Blockly.derivWorkspace) 
     return mandatory_tradeoptions_block;
 };
 
+/**
+ * Custom uploaded XML blocks can be registered as lossless aliases of native
+ * Deriv blocks (for example `apollo_purchase` -> `purchase`). Treat aliases as
+ * equivalent only while validating structure. Never mutate `block.type`, so
+ * loaded/saved XML keeps the original custom block names and strategy shape.
+ */
+const areEquivalentBlockTypes = (block_type, expected_type) => {
+    if (block_type === expected_type) return true;
+
+    const registered_blocks = window.Blockly?.Blocks;
+    if (!registered_blocks?.[block_type] || !registered_blocks?.[expected_type]) return false;
+
+    return registered_blocks[block_type] === registered_blocks[expected_type];
+};
+
+const matchesAnyBlockType = (block_type, expected_types) =>
+    expected_types.some(expected_type => areEquivalentBlockTypes(block_type, expected_type));
+
+const getEquivalentRequiredType = (block_type, required_block_types) =>
+    required_block_types.find(required_type => areEquivalentBlockTypes(block_type, required_type)) || block_type;
+
 export const matchTranslateAttribute = translateString => {
     const match = translateString.match(/translate\((-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)/);
     if (match && match.length > 2) {
@@ -71,21 +92,23 @@ export const extractTranslateValues = () => {
 export const validateErrorOnBlockDelete = () => {
     // Get the bounding rectangle of the selected block
     const { translate_X, translate_Y } = extractTranslateValues();
-    const blockRect = window.Blockly.getSelected()?.getSvgRoot().getBoundingClientRect();
+    const selected_block = window.Blockly?.getSelected();
+    const blockRect = selected_block?.getSvgRoot().getBoundingClientRect();
     const translate_offset = 200;
     // Extract coordinates from the bounding rectangles
     const blockX = blockRect?.left || 0;
     const blockY = blockRect?.top || 0;
     const mandatory_trade_option_block = getSelectedTradeType();
     const required_block_types = [mandatory_trade_option_block, 'trade_definition', 'purchase', 'before_purchase'];
-    if (required_block_types?.includes(window.Blockly?.getSelected()?.type)) {
+    const required_block_type = getEquivalentRequiredType(selected_block?.type, required_block_types);
+    if (required_block_types?.includes(required_block_type)) {
         if (
             blockY >= translate_Y - translate_offset &&
             blockY <= translate_Y + translate_offset &&
             blockX >= translate_X - translate_offset &&
             blockX <= translate_X + translate_offset
         ) {
-            globalObserver.emit('ui.log.error', error_message_map?.()?.[window.Blockly?.getSelected()?.type]?.default);
+            globalObserver.emit('ui.log.error', error_message_map?.()?.[required_block_type]?.default);
         }
     }
 };
@@ -104,7 +127,7 @@ export const updateWorkspaceName = () => {
     }
 };
 
-export const isMainBlock = block_type => config().mainBlocks.indexOf(block_type) >= 0;
+export const isMainBlock = block_type => config().mainBlocks.some(type => areEquivalentBlockTypes(block_type, type));
 
 export const oppositesToDropdownOptions = opposite_name => {
     return opposite_name.map(contract_type => {
@@ -391,9 +414,9 @@ export const addDomAsBlock = (el_block, parent_block = null) => {
 
 const getAllRequiredBlocks = (workspace, required_block_types) => {
     return workspace.getAllBlocks().filter(block => {
-        if (required_block_types.includes(block.type)) {
+        if (matchesAnyBlockType(block.type, required_block_types)) {
             return (
-                (block.childBlocks_.length === 0 && required_block_types.includes(block.category_)) ||
+                (block.childBlocks_.length === 0 && matchesAnyBlockType(block.category_, required_block_types)) ||
                 block.parentBlock_ === null
             );
         }
@@ -402,7 +425,7 @@ const getAllRequiredBlocks = (workspace, required_block_types) => {
 
 const getMissingBlocks = (workspace, required_block_types) => {
     return required_block_types.filter(blockType => {
-        return !workspace.getAllBlocks().some(block => block.type === blockType);
+        return !workspace.getAllBlocks().some(block => areEquivalentBlockTypes(block.type, blockType));
     });
 };
 
@@ -412,8 +435,8 @@ const getDisabledBlocks = required_blocks_check => {
     const disabled_blocks = Object.fromEntries(
         workspace
             .getAllBlocks()
-            .filter(block => required_block_types.includes(block.type))
-            .map(block => [block.type, block.disabled])
+            .filter(block => matchesAnyBlockType(block.type, required_block_types))
+            .map(block => [getEquivalentRequiredType(block.type, required_block_types), block.disabled])
     );
     const mandatory_blocks = ['before_purchase', 'purchase', 'trade_definition', 'trade_definition_tradeoptions'];
     const has_disabled_blocks = mandatory_blocks.some(type => disabled_blocks[type]);
@@ -423,20 +446,23 @@ const getDisabledBlocks = required_blocks_check => {
         : [];
 };
 
-const throwNewErrorMessage = (error_blocks, key) => {
+const throwNewErrorMessage = (error_blocks, key, required_block_types = []) => {
     return error_blocks.forEach(block => {
+        const block_type =
+            typeof block === 'string' ? block : getEquivalentRequiredType(block?.type, required_block_types);
         if (key === 'misplaced' && block)
-            globalObserver.emit('ui.log.error', error_message_map?.()?.[block?.type]?.[key]);
+            globalObserver.emit('ui.log.error', error_message_map?.()?.[block_type]?.[key]);
         else if (key === 'missing' && block) globalObserver.emit('ui.log.error', error_message_map?.()?.[block]?.[key]);
         else if (key === 'disabled' && block) {
             let parent_block_error = false;
-            const parent_error_message = error_message_map?.()?.[block.type]?.[key];
+            const parent_error_message = error_message_map?.()?.[block_type]?.[key];
             if (block.disabled && parent_error_message) {
                 globalObserver.emit('ui.log.error', parent_error_message);
                 parent_block_error = true;
             } else if (!parent_block_error && block.childBlocks_) {
                 block.childBlocks_.forEach(childBlock => {
-                    const child_error_message = error_message_map?.()?.[childBlock.type]?.[key];
+                    const child_block_type = getEquivalentRequiredType(childBlock.type, required_block_types);
+                    const child_error_message = error_message_map?.()?.[child_block_type]?.[key];
                     if (child_error_message) globalObserver.emit('ui.log.error', child_error_message);
                 });
             }
@@ -456,8 +482,8 @@ export const isAllRequiredBlocksEnabled = workspace => {
     const missing_blocks = getMissingBlocks(workspace, required_block_types);
     const disabled_blocks = getDisabledBlocks(required_blocks_check);
 
-    if (missing_blocks) throwNewErrorMessage(missing_blocks, 'missing');
-    if (disabled_blocks) throwNewErrorMessage(disabled_blocks, 'disabled');
+    if (missing_blocks) throwNewErrorMessage(missing_blocks, 'missing', required_block_types);
+    if (disabled_blocks) throwNewErrorMessage(disabled_blocks, 'disabled', required_block_types);
 
     const error_blocks = [...missing_blocks, ...disabled_blocks];
     const blocks_required = error_blocks.length === 0;
@@ -542,7 +568,7 @@ export const runIrreversibleEvents = callbackFn => {
 };
 
 /**
- * Disables Blockly Events globally and runs the passed callbackFn.
+ * Disables Blockly Events globally and runs the passed callBackFn.
  * (Preference should be given to runIrreversibleEvents).
  * @param {*} callbackFn Logic to completely hide from Blockly
  */
