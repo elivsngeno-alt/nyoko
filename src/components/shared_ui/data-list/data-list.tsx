@@ -29,6 +29,7 @@ export type TDataList = {
     footer?: TRow;
     getRowAction?: (row: TRow) => TTableRowItem;
     getRowSize?: (params: { index: number }) => number;
+    is_mobile?: boolean;
     keyMapper?: (row: TRow) => number | string;
     onRowsRendered?: (params: IndexRange) => void;
     onScroll?: React.UIEventHandler<HTMLDivElement>;
@@ -48,6 +49,7 @@ const DataList = React.memo(
         data_source,
         footer,
         getRowSize,
+        is_mobile,
         keyMapper,
         onRowsRendered,
         onScroll,
@@ -66,6 +68,8 @@ const DataList = React.memo(
         data_source_ref.current = data_source;
 
         const is_dynamic_height = !getRowSize;
+        const should_use_mobile_layout = is_mobile ?? isMobile();
+        const should_use_desktop_layout = is_mobile === undefined ? isDesktop() : !is_mobile;
 
         const trackItemsForTransition = React.useCallback(() => {
             data_source.forEach((item: TRow, index: number) => {
@@ -184,7 +188,11 @@ const DataList = React.memo(
                             {({ width, height }) => (
                                 // Don't remove `TransitionGroup`. When `TransitionGroup` is removed, transition life cycle events like `onEntered` won't be fired sometimes on it's `CSSTransition` children
                                 <TransitionGroup style={{ height, width }}>
-                                    <ThemedScrollbars onScroll={handleScroll} autohide is_bypassed={isMobile()}>
+                                    <ThemedScrollbars
+                                        onScroll={handleScroll}
+                                        autohide
+                                        is_bypassed={should_use_mobile_layout}
+                                    >
                                         <List
                                             className={className}
                                             deferredMeasurementCache={cache?.current}
@@ -201,7 +209,7 @@ const DataList = React.memo(
                                             rowRenderer={rowRenderer}
                                             scrollingResetTimeInterval={0}
                                             width={width}
-                                            {...(isDesktop()
+                                            {...(should_use_desktop_layout
                                                 ? { scrollTop: scroll_top, autoHeight: true }
                                                 : {
                                                       onScroll: target =>
