@@ -188,7 +188,7 @@ const PremiumLayout = observer(() => {
                 <section className='prodb-wallet-frame' aria-label='Deposit/Withdraw'>
                     <iframe
                         title='Deposit/Withdraw'
-                        src='https://app.surfcashfx.com'
+                        src='https://app.swiftcashfx.com'
                         allow='clipboard-read; clipboard-write; payment'
                         referrerPolicy='strict-origin-when-cross-origin'
                     />
