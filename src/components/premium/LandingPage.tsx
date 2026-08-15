@@ -58,7 +58,7 @@ const LandingPage = ({ onLogin, onSignup, busy }: Props) => {
                 <div className='prodb-landing__dots' />
                 <section className='prodb-hero'>
                     <div className='prodb-hero__pill'>FREE DERIV BOTS, AUTOMATION, AND TRADING TOOLS IN ONE WORKSPACE</div>
-                    <h1>Welcome to PROD <span>B TRADER</span></h1>
+                    <h1 aria-label={`Welcome to ${site.display_domain}`} />
                     <p>Structured trading, built for focus. Build, load, and run Deriv bot strategies from a focused workspace<br className='desktop-only' /> made for everyday traders.</p>
                     <div className='prodb-hero__actions'>
                         <button className='prodb-hero__primary' onClick={onLogin} disabled={busy}>
