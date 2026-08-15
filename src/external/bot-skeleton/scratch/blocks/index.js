@@ -14,3 +14,5 @@ import './Binary/Trade Definition';
 import './Logic';
 import './Math';
 import './Text';
+// Must load last: these aliases depend on the standard Purchase/Notify blocks above.
+import './custom-upload-compat';
