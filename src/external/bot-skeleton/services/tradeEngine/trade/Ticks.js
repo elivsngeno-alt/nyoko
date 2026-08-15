@@ -90,6 +90,39 @@ export default Engine =>
         getLastDigitList() {
             return new Promise(resolve => this.getTicks().then(ticks => resolve(this.getLastDigitsFromList(ticks))));
         }
+
+        async getDigitFrequencyAnalysis(analysis_type = 'MOST_FREQUENT', requested_n = 1000) {
+            const digits = await this.getLastDigitList();
+            const parsed_n = Math.floor(Number(requested_n));
+            const n = Number.isFinite(parsed_n) && parsed_n > 0 ? Math.min(parsed_n, digits.length) : digits.length;
+            const sample = digits.slice(-n);
+            const counts = Array(10).fill(0);
+
+            sample.forEach(value => {
+                const digit = Number(value);
+                if (Number.isInteger(digit) && digit >= 0 && digit <= 9) counts[digit] += 1;
+            });
+
+            const digits_by_most = Array.from({ length: 10 }, (_, digit) => digit).sort(
+                (a, b) => counts[b] - counts[a] || a - b
+            );
+            const digits_by_least = Array.from({ length: 10 }, (_, digit) => digit).sort(
+                (a, b) => counts[a] - counts[b] || a - b
+            );
+
+            switch (analysis_type) {
+                case 'SECOND_MOST_FREQUENT':
+                    return digits_by_most[1];
+                case 'LEAST_FREQUENT':
+                    return digits_by_least[0];
+                case 'SECOND_LEAST_FREQUENT':
+                    return digits_by_least[1];
+                case 'MOST_FREQUENT':
+                default:
+                    return digits_by_most[0];
+            }
+        }
+
         getLastDigitsFromList(ticks) {
             const digits = ticks.map(tick => {
                 return getLastDigit(tick.toFixed(this.getPipSize()));
