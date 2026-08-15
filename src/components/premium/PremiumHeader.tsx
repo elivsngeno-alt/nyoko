@@ -17,16 +17,20 @@ const navItems: Array<{ id: PremiumSection; label: string; Icon: typeof HomeIcon
     { id: 'copy_trading', label: 'Copy Trading', Icon: CopyIcon },
     { id: 'analysis_tools', label: 'Analysis Tool', Icon: SearchIcon },
     { id: 'calculator', label: 'Calculator', Icon: CalculatorIcon },
-    { id: 'deposit_stock_withdraw', label: 'Deposit, Stock, Withdraw', Icon: GridIcon },
+    { id: 'deposit_withdraw', label: 'Deposit/Withdraw', Icon: GridIcon },
 ];
 
 const PremiumHeader = observer(
     ({ active, onChange }: { active: PremiumSection; onChange: (section: PremiumSection) => void }) => {
         const navRef = useRef<HTMLElement | null>(null);
         const dragRef = useRef({ active: false, pointerId: -1, startX: 0, scrollLeft: 0, moved: false });
+        const suppressClickRef = useRef(false);
 
         const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
             if (event.pointerType !== 'mouse' || event.button !== 0 || !navRef.current) return;
+
+            // Do not capture the pointer yet. Capturing on pointer-down causes the
+            // subsequent click to target the nav element instead of the button.
             dragRef.current = {
                 active: true,
                 pointerId: event.pointerId,
@@ -34,7 +38,6 @@ const PremiumHeader = observer(
                 scrollLeft: navRef.current.scrollLeft,
                 moved: false,
             };
-            navRef.current.setPointerCapture?.(event.pointerId);
         };
 
         const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
@@ -43,24 +46,36 @@ const PremiumHeader = observer(
             if (!nav || !drag.active || drag.pointerId !== event.pointerId) return;
 
             const delta = event.clientX - drag.startX;
-            if (Math.abs(delta) > 4) drag.moved = true;
-            if (drag.moved) {
-                event.preventDefault();
-                nav.scrollLeft = drag.scrollLeft - delta;
+            if (!drag.moved && Math.abs(delta) <= 6) return;
+
+            if (!drag.moved) {
+                drag.moved = true;
+                nav.setPointerCapture?.(event.pointerId);
             }
+
+            event.preventDefault();
+            nav.scrollLeft = drag.scrollLeft - delta;
         };
 
         const endPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
             const nav = navRef.current;
+            const wasDragged = dragRef.current.active && dragRef.current.moved;
+
             if (nav?.hasPointerCapture?.(event.pointerId)) nav.releasePointerCapture(event.pointerId);
             dragRef.current.active = false;
+
+            // Suppress only the synthetic click immediately following an actual
+            // drag. Normal taps/clicks are never suppressed.
+            if (wasDragged) {
+                suppressClickRef.current = true;
+                window.setTimeout(() => {
+                    suppressClickRef.current = false;
+                }, 0);
+            }
         };
 
         const onNavClick = (section: PremiumSection) => {
-            if (dragRef.current.moved) {
-                dragRef.current.moved = false;
-                return;
-            }
+            if (suppressClickRef.current) return;
             onChange(section);
         };
 
