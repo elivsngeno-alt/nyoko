@@ -140,7 +140,7 @@
                 "display_domain": "digitaltraders.site",
                 "website_url": "https://digitaltraders.site",
                 "redirect_uri": "https://digitaltraders.site/callback",
-                "client_id": "33Xc49HyQWwVGFQaUe333",
+                "client_id": "33Xc49HyQVWVGFQaUe333",
                 "scopes": ["trade", "application_read"],
                 "environment": "production"
             }
