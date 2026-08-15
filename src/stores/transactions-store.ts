@@ -5,7 +5,7 @@ import { ProposalOpenContract } from '@deriv/api-types';
 import { TPortfolioPosition, TStores } from '@deriv/stores/types';
 import { TContractInfo } from '../components/summary/summary-card.types';
 import { transaction_elements } from '../constants/transactions';
-import { getStoredItemsByKey, getStoredItemsByUser, setStoredItemsByKey } from '../utils/session-storage';
+import { getStoredItemsByKey, setStoredItemsByKey } from '../utils/session-storage';
 import RootStore from './root-store';
 
 type TTransaction = {
@@ -25,11 +25,14 @@ export default class TransactionsStore {
     constructor(root_store: RootStore, core: TStores) {
         this.root_store = root_store;
         this.core = core;
+        this.elements = getStoredItemsByKey(this.TRANSACTION_CACHE, {});
+        this.active_account_id = this.core?.client?.loginid || '';
         this.is_transaction_details_modal_open = false;
         this.disposeReactionsFn = this.registerReactions();
 
         makeObservable(this, {
             elements: observable,
+            active_account_id: observable,
             active_transaction_id: observable,
             recovered_completed_transactions: observable,
             recovered_transactions: observable,
@@ -48,7 +51,8 @@ export default class TransactionsStore {
     }
     TRANSACTION_CACHE = 'transaction_cache';
 
-    elements: TElement = getStoredItemsByUser(this.TRANSACTION_CACHE, this.core?.client?.loginid, []);
+    elements: TElement = {};
+    active_account_id = '';
     active_transaction_id: null | number = null;
     recovered_completed_transactions: number[] = [];
     recovered_transactions: number[] = [];
@@ -56,7 +60,8 @@ export default class TransactionsStore {
     is_transaction_details_modal_open = false;
 
     get transactions(): TTransaction[] {
-        if (this.core?.client?.loginid) return this.elements[this.core?.client?.loginid] ?? [];
+        const current_account = this.active_account_id || this.core?.client?.loginid;
+        if (current_account) return this.elements[current_account] ?? [];
         return [];
     }
 
@@ -113,8 +118,10 @@ export default class TransactionsStore {
 
         const is_completed = isEnded(data as ProposalOpenContract);
         const { run_id } = this.root_store.run_panel;
-        const current_account = this.core?.client?.loginid as string;
+        const current_account = String(data.accountID || this.core?.client?.loginid || this.active_account_id || '');
         if (!current_account) return;
+
+        this.active_account_id = current_account;
 
         const contract: TContractInfo = {
             ...data,
@@ -180,8 +187,10 @@ export default class TransactionsStore {
     }
 
     clear() {
-        if (this.elements && this.elements[this.core?.client?.loginid as string]?.length > 0) {
-            this.elements[this.core?.client?.loginid as string] = [];
+        const current_account = this.active_account_id || (this.core?.client?.loginid as string);
+        if (current_account && this.elements?.[current_account]?.length > 0) {
+            this.elements[current_account] = [];
+            this.elements = { ...this.elements };
         }
         this.recovered_completed_transactions = this.recovered_completed_transactions?.slice(0, 0);
         this.recovered_transactions = this.recovered_transactions?.slice(0, 0);
@@ -191,11 +200,25 @@ export default class TransactionsStore {
     registerReactions() {
         const { client } = this.core;
 
+        const disposeActiveAccountListener = reaction(
+            () => client?.loginid,
+            loginid => {
+                if (loginid) this.active_account_id = loginid;
+            }
+        );
+
         const disposeTransactionElementsListener = reaction(
-            () => this.elements[client?.loginid as string],
-            elements => {
+            () => {
+                const account_id = this.active_account_id || client?.loginid;
+                return {
+                    account_id,
+                    elements: account_id ? this.elements[account_id] : undefined,
+                };
+            },
+            ({ account_id, elements }) => {
+                if (!account_id) return;
                 const stored_transactions = getStoredItemsByKey(this.TRANSACTION_CACHE, {});
-                stored_transactions[client.loginid as string] = elements?.slice(0, 5000) ?? [];
+                stored_transactions[account_id] = elements?.slice(0, 5000) ?? [];
                 setStoredItemsByKey(this.TRANSACTION_CACHE, stored_transactions);
             }
         );
@@ -206,6 +229,7 @@ export default class TransactionsStore {
         );
 
         return () => {
+            disposeActiveAccountListener();
             disposeTransactionElementsListener();
             disposeRecoverContracts();
         };
@@ -270,13 +294,13 @@ export default class TransactionsStore {
         }
 
         if (!this.is_called_proposal_open_contract) {
-            if (this.core?.client?.loginid) {
-                const current_account = this.core?.client?.loginid;
+            const current_account = this.active_account_id || this.core?.client?.loginid;
+            if (current_account) {
                 if (!this.elements[current_account]?.length) {
                     this.sortOutPositionsBeforeAction(positions as TPortfolioPosition[]);
                 }
 
-                const elements = this.elements[current_account];
+                const elements = this.elements[current_account] ?? [];
                 const [element = null] = elements;
                 if (typeof element?.data === 'object' && !element?.data?.profit) {
                     const element_id = element.data.contract_id;
