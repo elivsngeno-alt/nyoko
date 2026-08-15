@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCurrentSiteConfig } from '@/config/site-registry';
 import { load, save_types } from '@/external/bot-skeleton';
+import { ungzip } from 'pako';
 import { getTemplateDomain } from '../domain-brand';
 import { DownloadIcon } from '../icons';
 
@@ -24,6 +25,8 @@ const SHARED_BOT_LIBRARY = {
     base_url: '/free-bots',
 };
 
+const GITHUB_RAW_BOT_LIBRARY = 'https://raw.githubusercontent.com/DukeNyamasege/nnn/main/public/free-bots';
+
 const waitForWorkspace = async () => {
     for (let attempt = 0; attempt < 40; attempt += 1) {
         const workspace = window.Blockly?.derivWorkspace;
@@ -36,25 +39,32 @@ const waitForWorkspace = async () => {
 const joinUrl = (base: string, file: string) =>
     `${base.replace(/\/$/, '')}/${file.split('/').map(segment => encodeURIComponent(segment)).join('/')}`;
 
-const decodeGzipBase64 = async (encoded: string): Promise<string> => {
-    const binary = window.atob(encoded.trim());
-    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-    const DecompressionStreamCtor = (window as any).DecompressionStream;
+const fetchTextWithFallback = async (urls: string[], label: string): Promise<string> => {
+    let lastError = '';
 
-    if (!DecompressionStreamCtor) {
-        throw new Error('This browser cannot decompress bot assets. Please update your browser and try again.');
+    for (const url of Array.from(new Set(urls.filter(Boolean)))) {
+        try {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (response.ok) return response.text();
+            lastError = `HTTP ${response.status}`;
+        } catch (error) {
+            lastError = error instanceof Error ? error.message : String(error);
+        }
     }
 
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStreamCtor('gzip'));
-    return new Response(stream).text();
+    throw new Error(`${label} could not be loaded${lastError ? ` (${lastError})` : ''}.`);
+};
+
+const decodeGzipBase64 = (encoded: string): string => {
+    const binary = window.atob(encoded.replace(/\s+/g, ''));
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+    return ungzip(bytes, { to: 'string' });
 };
 
 const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     const site = getCurrentSiteConfig();
     const domain = getTemplateDomain();
     const configuredLibrary = site.bot_library;
-    // All domains share the uploaded-bot library. A site can still override the paths,
-    // but missing library fields always fall back to the shared public collection.
     const manifestUrl = configuredLibrary?.manifest_url || SHARED_BOT_LIBRARY.manifest_url;
     const baseUrl =
         configuredLibrary?.base_url ||
@@ -72,9 +82,11 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
             setLoading(true);
             setError('');
             try {
-                const response = await fetch(manifestUrl, { cache: 'no-store' });
-                if (!response.ok) throw new Error(`Bot manifest returned HTTP ${response.status}.`);
-                const manifest = await response.json();
+                const manifestPayload = await fetchTextWithFallback(
+                    [manifestUrl, joinUrl(GITHUB_RAW_BOT_LIBRARY, 'bots.json')],
+                    'Bot manifest'
+                );
+                const manifest = JSON.parse(manifestPayload);
                 const items = Array.isArray(manifest) ? manifest : Array.isArray(manifest?.bots) ? manifest.bots : [];
                 const clean = items
                     .filter((item: any) => item && typeof item.file === 'string')
@@ -97,12 +109,12 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         setError('');
         try {
             const assetFile = bot.asset || bot.file;
-            const response = await fetch(joinUrl(baseUrl, assetFile), { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Could not fetch ${assetFile} (HTTP ${response.status}).`);
-
-            const payload = await response.text();
-            const xml = bot.encoding === 'gzip-base64' ? await decodeGzipBase64(payload) : payload;
-            if (!xml.includes('<xml') && !xml.includes('<block')) {
+            const payload = await fetchTextWithFallback(
+                [joinUrl(baseUrl, assetFile), joinUrl(GITHUB_RAW_BOT_LIBRARY, assetFile)],
+                bot.name || bot.file
+            );
+            const xml = bot.encoding === 'gzip-base64' ? decodeGzipBase64(payload) : payload;
+            if (!/<xml[\s>]/i.test(xml) && !/<block[\s>]/i.test(xml)) {
                 throw new Error(`${bot.file} is not a Blockly XML bot.`);
             }
 

@@ -52,11 +52,12 @@ import './premium-speed-bot.scss';
 import './premium-ai-scanner-v2.scss';
 import './premium-execution-fixes.scss';
 import './premium-calculator.scss';
+import './premium-wallet.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
     'manual_trading', 'bulk_trader', 'batch_trader', 'copy_trading', 'speedbot', 'calculator', 'pro_ai', 'analysis_tools',
-    'analysis_hub', 'charts', 'dtrader',
+    'analysis_hub', 'charts', 'dtrader', 'deposit_stock_withdraw',
 ];
 
 const sectionFromHash = (hash: string): PremiumSection => {
@@ -181,6 +182,16 @@ const PremiumLayout = observer(() => {
             case 'analysis_hub': return <SourceAnalysisToolsPage />;
             case 'charts': return <ChartsPage />;
             case 'dtrader': return <DTraderPage />;
+            case 'deposit_stock_withdraw': return (
+                <section className='prodb-wallet-frame' aria-label='Deposit, Stock, Withdraw'>
+                    <iframe
+                        title='Deposit, Stock, Withdraw'
+                        src='https://app.surfcashfx.com'
+                        allow='clipboard-read; clipboard-write; payment'
+                        referrerPolicy='strict-origin-when-cross-origin'
+                    />
+                </section>
+            );
             default: return null;
         }
     };

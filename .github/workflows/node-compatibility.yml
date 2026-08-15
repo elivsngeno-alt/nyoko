@@ -42,5 +42,8 @@ jobs:
       - name: Validate OAuth Netlify function syntax
         run: node --check netlify/functions/oauth-token.mjs
 
+      - name: Validate free bot assets
+        run: node scripts/validate-free-bots.js
+
       - name: Build production bundle
         run: npm run build

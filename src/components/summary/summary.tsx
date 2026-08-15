@@ -24,6 +24,7 @@ const Summary = observer(({ is_drawer_open }: TSummary) => {
             data-testid='mock-summary'
         >
             <ThemedScrollbars
+                is_bypassed={!isDesktop}
                 className={classnames({
                     summary: (!is_contract_loading && !contract_info) || is_bot_running,
                     'summary--loading':

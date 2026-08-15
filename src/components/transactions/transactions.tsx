@@ -53,6 +53,13 @@ const TransactionItem = ({ row = false, onClickTransaction, active_transaction_i
     }
 };
 
+const getTransactionKey = (row: TTransactionItem['row'], index: number) => {
+    if (row.type === transaction_elements.CONTRACT) {
+        return row.data.transaction_ids?.buy ?? row.data.contract_id ?? `contract-${index}`;
+    }
+    return `divider-${index}`;
+};
+
 const Transactions = observer(({ is_drawer_open }: TTransactions) => {
     const [active_transaction_id, setActiveTransactionId] = React.useState<number | null>(null);
     const { run_panel, transactions } = useStore();
@@ -134,51 +141,67 @@ const Transactions = observer(({ is_drawer_open }: TTransactions) => {
             >
                 <div className='transactions__scrollbar'>
                     {transaction_list?.length ? (
-                        <DataList
-                            className='transactions'
-                            data_source={transaction_list}
-                            is_mobile={!isDesktop}
-                            rowRenderer={props => (
-                                <TransactionItem
-                                    onClickTransaction={onClickTransaction}
-                                    active_transaction_id={active_transaction_id}
-                                    {...props}
-                                />
-                            )}
-                            keyMapper={row => {
-                                switch (row.type) {
-                                    case transaction_elements.CONTRACT: {
-                                        return row.data.transaction_ids?.buy ?? row.data.contract_id ?? null;
+                        isDesktop ? (
+                            <DataList
+                                className='transactions'
+                                data_source={transaction_list}
+                                is_mobile={false}
+                                rowRenderer={props => (
+                                    <TransactionItem
+                                        onClickTransaction={onClickTransaction}
+                                        active_transaction_id={active_transaction_id}
+                                        {...props}
+                                    />
+                                )}
+                                keyMapper={row => {
+                                    switch (row.type) {
+                                        case transaction_elements.CONTRACT: {
+                                            return row.data.transaction_ids?.buy ?? row.data.contract_id ?? null;
+                                        }
+                                        case transaction_elements.DIVIDER: {
+                                            return row.data;
+                                        }
+                                        default: {
+                                            return null;
+                                        }
                                     }
-                                    case transaction_elements.DIVIDER: {
-                                        return row.data;
+                                }}
+                                getRowSize={({ index }) => {
+                                    const row = transaction_list?.[index];
+                                    switch (row.type) {
+                                        case transaction_elements.CONTRACT: {
+                                            return 50;
+                                        }
+                                        case transaction_elements.DIVIDER: {
+                                            return 21;
+                                        }
+                                        default: {
+                                            return 0;
+                                        }
                                     }
-                                    default: {
-                                        return null;
-                                    }
-                                }
-                            }}
-                            getRowSize={({ index }) => {
-                                const row = transaction_list?.[index];
-                                switch (row.type) {
-                                    case transaction_elements.CONTRACT: {
-                                        return 50;
-                                    }
-                                    case transaction_elements.DIVIDER: {
-                                        return 21;
-                                    }
-                                    default: {
-                                        return 0;
-                                    }
-                                }
-                            }}
-                        />
+                                }}
+                            />
+                        ) : (
+                            <div className='transactions__mobile-list' data-testid='dt_mobile_transaction_list'>
+                                {transaction_list.map((row, index) => {
+                                    const typedRow = row as TTransactionItem['row'];
+                                    return (
+                                        <TransactionItem
+                                            key={getTransactionKey(typedRow, index)}
+                                            row={typedRow}
+                                            onClickTransaction={onClickTransaction}
+                                            active_transaction_id={active_transaction_id}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )
                     ) : (
                         <>
                             {contract_stage >= contract_stages.STARTING ? (
                                 <Transaction contract={null} />
                             ) : (
-                                <ThemedScrollbars>
+                                <ThemedScrollbars is_bypassed={!isDesktop}>
                                     <div className='transactions-empty-box'>
                                         <div className='transactions-empty'>
                                             <div className='transactions-empty__icon-box'>
