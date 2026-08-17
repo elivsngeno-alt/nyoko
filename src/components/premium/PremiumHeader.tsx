@@ -17,7 +17,6 @@ const navItems: Array<{ id: PremiumSection; label: string; Icon: typeof HomeIcon
     { id: 'copy_trading', label: 'Copy Trading', Icon: CopyIcon },
     { id: 'analysis_tools', label: 'Analysis Tool', Icon: SearchIcon },
     { id: 'calculator', label: 'Calculator', Icon: CalculatorIcon },
-    { id: 'deposit_withdraw', label: 'Deposit/Withdraw', Icon: GridIcon },
 ];
 
 const PremiumHeader = observer(
