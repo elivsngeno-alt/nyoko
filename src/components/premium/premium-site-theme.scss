@@ -1,0 +1,27 @@
+.prodb-premium-shell {
+    .prodb-app-header {
+        background: var(--site-header-background, #fff);
+    }
+
+    .prodb-nav {
+        background: var(--site-nav-background, #151d26);
+    }
+
+    .prodb-nav button {
+        color: var(--site-nav-text, #f3f6f8);
+        background: var(--site-nav-background, #151d26);
+    }
+
+    .prodb-nav button svg {
+        color: var(--site-secondary, #19cba3);
+    }
+
+    .prodb-nav button.is-active {
+        color: #fff;
+        background: var(--site-primary, #059669);
+    }
+
+    .prodb-nav button.is-active svg {
+        color: #fff;
+    }
+}

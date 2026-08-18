@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { generateOAuthURL } from '@/components/shared';
@@ -33,6 +34,7 @@ import {
 import { ChartsPage } from './pages/LiveTradingPages';
 import PatCopyTradingPage from './pages/PatCopyTradingPage';
 import SpeedBotPage from './pages/SpeedBotPage';
+import { isCustomizableSection, useSiteCustomization } from './site-customization';
 import type { PremiumSection } from './types';
 import './premium-base.scss';
 import './premium-app.scss';
@@ -54,6 +56,7 @@ import './premium-ai-scanner-v2.scss';
 import './premium-execution-fixes.scss';
 import './premium-calculator.scss';
 import './premium-wallet.scss';
+import './premium-site-theme.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
@@ -72,6 +75,7 @@ const PremiumLayout = observer(() => {
     const { client, dashboard, run_panel } = store ?? {};
     const location = useLocation();
     const navigate = useNavigate();
+    const customization = useSiteCustomization();
     const [section, setSection] = useState<PremiumSection>(() => sectionFromHash(location.hash));
     const [, setAuthProbe] = useState(0);
     const hasBootstrappedSession = useRef(false);
@@ -145,7 +149,11 @@ const PremiumLayout = observer(() => {
         }
     }, [setIsAuthorizing]);
 
-    const changeSection = useCallback((next: PremiumSection) => {
+    const changeSection = useCallback((requested: PremiumSection) => {
+        const next = isCustomizableSection(requested) && !customization.navigation.includes(requested)
+            ? 'dashboard'
+            : requested;
+
         setSection(next);
         navigate(
             {
@@ -157,7 +165,14 @@ const PremiumLayout = observer(() => {
         );
 
         if (next === 'bot_builder') activateNativeBotBuilder();
-    }, [activateNativeBotBuilder, location.pathname, location.search, navigate]);
+    }, [activateNativeBotBuilder, customization.navigation, location.pathname, location.search, navigate]);
+
+    useEffect(() => {
+        if (!customization.loaded) return;
+        if (isCustomizableSection(section) && !customization.navigation.includes(section)) {
+            changeSection('dashboard');
+        }
+    }, [changeSection, customization.loaded, customization.navigation, section]);
 
     if (!runtimeAuthenticated && (isOAuthCallback || isAuthorizing || hasStoredAuth)) return <PremiumLoader />;
     if (!isAuthenticated) return <LandingPage onLogin={() => startOAuth()} onSignup={() => startOAuth('registration')} busy={isAuthorizing} />;
@@ -189,10 +204,20 @@ const PremiumLayout = observer(() => {
 
     const isBotBuilder = section === 'bot_builder';
     const isRunPanelOpen = Boolean(run_panel?.is_drawer_open);
+    const themeStyle = {
+        '--site-primary': customization.colors.primary,
+        '--site-secondary': customization.colors.secondary,
+        '--site-nav-background': customization.colors.nav_background,
+        '--site-nav-text': customization.colors.nav_text,
+        '--site-header-background': customization.colors.header_background,
+    } as CSSProperties;
 
-    return <div className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''} ${isRunPanelOpen ? 'prodb-premium-shell--run-open' : ''}`}>
+    return <div
+        className={`prodb-premium-shell ${isBotBuilder ? 'prodb-premium-shell--builder' : ''} ${isRunPanelOpen ? 'prodb-premium-shell--run-open' : ''}`}
+        style={themeStyle}
+    >
         <GlobalContractBridge />
-        <PremiumHeader active={section} onChange={changeSection} />
+        <PremiumHeader active={section} navigation={customization.navigation} onChange={changeSection} />
         <main className='prodb-premium-content'>
             {!isBotBuilder && renderSection()}
             <div className={`prodb-bot-builder-host ${isBotBuilder ? 'is-active' : 'is-hidden'}`} data-premium-builder-active={isBotBuilder ? 'true' : 'false'}>
