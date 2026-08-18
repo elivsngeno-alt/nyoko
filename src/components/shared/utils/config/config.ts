@@ -59,18 +59,23 @@ const getDefaultServerURL = () => {
 
 /**
  * Gets the WebSocket URL using the authenticated OTP flow when an OAuth token exists.
+ * Once OAuth is present we must never silently downgrade to the public market-data
+ * socket: a public socket makes charts appear healthy but cannot purchase contracts.
  */
 export const getSocketURL = async (): Promise<string> => {
-    try {
-        const authInfo = OAuthTokenExchangeService.getAuthInfo();
-        if (!authInfo || !authInfo.access_token) {
-            return getDefaultServerURL();
-        }
+    const authInfo = OAuthTokenExchangeService.getAuthInfo();
+    if (!authInfo || !authInfo.access_token) {
+        return getDefaultServerURL();
+    }
 
+    try {
         return await DerivWSAccountsService.getAuthenticatedWebSocketURL(authInfo.access_token);
     } catch (error) {
-        console.error('[DerivWS] Error in getSocketURL:', error);
-        return getDefaultServerURL();
+        const message = error instanceof Error
+            ? error.message
+            : (error as any)?.error?.message || (error as any)?.message || 'Unable to create authenticated Deriv WebSocket.';
+        console.error('[DerivWS] Authenticated WebSocket setup failed:', message);
+        throw error instanceof Error ? error : new Error(message);
     }
 };
 
