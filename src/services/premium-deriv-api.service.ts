@@ -52,10 +52,20 @@ export class PremiumDerivApiService {
     private static async getApi(): Promise<any> {
         if (!api_base.api) await api_base.init(true);
 
-        for (let attempt = 0; attempt < 80; attempt += 1) {
+        const requiresAuthenticatedAccount = Boolean(OAuthTokenExchangeService.getAccessToken());
+        let socketOpened = false;
+
+        for (let attempt = 0; attempt < 120; attempt += 1) {
             const api: any = api_base.api;
-            if (api?.connection?.readyState === WebSocket.OPEN) return api;
+            if (api?.connection?.readyState === WebSocket.OPEN) {
+                socketOpened = true;
+                if (!requiresAuthenticatedAccount || api_base.is_authorized) return api;
+            }
             await sleep(125);
+        }
+
+        if (socketOpened && requiresAuthenticatedAccount && !api_base.is_authorized) {
+            throw new Error('Deriv account connection opened but authentication did not complete. Reconnect the selected account and try again.');
         }
         throw new Error('Deriv WebSocket is not ready. Please reconnect and try again.');
     }
@@ -150,7 +160,7 @@ export class PremiumDerivApiService {
         return Boolean(
             terminalStatus ||
             contract.is_sold ||
-            contract.is_expired ||
+            (contract.is_expired && hasFinalProfit) ||
             (exitTime > 0 && hasFinalProfit && status !== 'open')
         );
     }
