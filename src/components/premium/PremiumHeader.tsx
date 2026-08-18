@@ -4,23 +4,26 @@ import { observer } from 'mobx-react-lite';
 import BrandMark from './BrandMark';
 import PremiumAccountSwitcher from './PremiumAccountSwitcher';
 import { CalculatorIcon, CopyIcon, GearIcon, GridIcon, HomeIcon, RobotIcon, SearchIcon } from './icons';
+import { NAVIGATION_CATALOG } from './site-customization';
 import PremiumTicker from './PremiumTicker';
 import type { PremiumSection } from './types';
 
-const navItems: Array<{ id: PremiumSection; label: string; Icon: typeof HomeIcon }> = [
-    { id: 'dashboard', label: 'Dashboard', Icon: HomeIcon },
-    { id: 'bot_builder', label: 'Bot Builder', Icon: GearIcon },
-    { id: 'free_bots', label: 'Free Bots', Icon: RobotIcon },
-    { id: 'bulk_trader', label: 'Bulk Trader', Icon: GridIcon },
-    { id: 'batch_trader', label: 'Batch Trader', Icon: GridIcon },
-    { id: 'speedbot', label: 'Speed Bot', Icon: GridIcon },
-    { id: 'copy_trading', label: 'Copy Trading', Icon: CopyIcon },
-    { id: 'analysis_tools', label: 'Analysis Tool', Icon: SearchIcon },
-    { id: 'calculator', label: 'Calculator', Icon: CalculatorIcon },
-];
+const NAV_ICONS: Partial<Record<PremiumSection, typeof HomeIcon>> = {
+    dashboard: HomeIcon,
+    bot_builder: GearIcon,
+    free_bots: RobotIcon,
+    bulk_trader: GridIcon,
+    batch_trader: GridIcon,
+    speedbot: GridIcon,
+    copy_trading: CopyIcon,
+    analysis_tools: SearchIcon,
+    calculator: CalculatorIcon,
+};
+
+const NAV_LABELS = Object.fromEntries(NAVIGATION_CATALOG.map(item => [item.id, item.label])) as Partial<Record<PremiumSection, string>>;
 
 const PremiumHeader = observer(
-    ({ active, onChange }: { active: PremiumSection; onChange: (section: PremiumSection) => void }) => {
+    ({ active, navigation, onChange }: { active: PremiumSection; navigation: PremiumSection[]; onChange: (section: PremiumSection) => void }) => {
         const navRef = useRef<HTMLElement | null>(null);
         const dragRef = useRef({ active: false, pointerId: -1, startX: 0, scrollLeft: 0, moved: false });
         const suppressClickRef = useRef(false);
@@ -28,8 +31,6 @@ const PremiumHeader = observer(
         const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
             if (event.pointerType !== 'mouse' || event.button !== 0 || !navRef.current) return;
 
-            // Do not capture the pointer yet. Capturing on pointer-down causes the
-            // subsequent click to target the nav element instead of the button.
             dragRef.current = {
                 active: true,
                 pointerId: event.pointerId,
@@ -63,8 +64,6 @@ const PremiumHeader = observer(
             if (nav?.hasPointerCapture?.(event.pointerId)) nav.releasePointerCapture(event.pointerId);
             dragRef.current.active = false;
 
-            // Suppress only the synthetic click immediately following an actual
-            // drag. Normal taps/clicks are never suppressed.
             if (wasDragged) {
                 suppressClickRef.current = true;
                 window.setTimeout(() => {
@@ -95,12 +94,17 @@ const PremiumHeader = observer(
                     onPointerUp={endPointerDrag}
                     onPointerCancel={endPointerDrag}
                 >
-                    {navItems.map(({ id, label, Icon }) => (
-                        <button key={id} className={active === id ? 'is-active' : ''} onClick={() => onNavClick(id)}>
-                            <Icon />
-                            <span>{label}</span>
-                        </button>
-                    ))}
+                    {navigation.map(id => {
+                        const Icon = NAV_ICONS[id];
+                        const label = NAV_LABELS[id];
+                        if (!Icon || !label) return null;
+                        return (
+                            <button key={id} className={active === id ? 'is-active' : ''} onClick={() => onNavClick(id)}>
+                                <Icon />
+                                <span>{label}</span>
+                            </button>
+                        );
+                    })}
                 </nav>
                 <PremiumTicker light />
             </>
