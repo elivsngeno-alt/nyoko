@@ -30,6 +30,7 @@ type TDialogOptions = {
 
 export interface IDashboardStore {
     active_tab: number;
+    active_trading_module: string | null;
     dialog_options: TDialogOptions;
     faq_search_value: string | null;
     has_mobile_preview_loaded: boolean;
@@ -43,6 +44,10 @@ export interface IDashboardStore {
     onCloseTour: (param: Partial<string>) => void;
     onTourEnd: (step: number, is_tour_active: boolean) => void;
     setActiveTab: (active_tab: number) => void;
+    setActiveTradingModule: (active_trading_module: string | null) => void;
+    registerTradingStopHandler: (module_id: string, handler: () => void) => void;
+    unregisterTradingStopHandler: (module_id: string) => void;
+    stopActiveTradingModule: () => void;
     setActiveTabTutorial: (active_tab_tutorials: number) => void;
     setFAQSearchValue: (faq_search_value: string) => void;
     setInfoPanelVisibility: (visibility: boolean) => void;
@@ -74,6 +79,8 @@ export default class DashboardStore implements IDashboardStore {
         makeObservable(this, {
             active_tab_tutorials: observable,
             active_tab: observable,
+            active_trading_module: observable,
+            trading_stop_handlers: observable,
             dialog_options: observable,
             faq_search_value: observable,
             getFileArray: observable,
@@ -92,6 +99,10 @@ export default class DashboardStore implements IDashboardStore {
             onCloseTour: action.bound,
             onTourEnd: action.bound,
             setActiveTab: action.bound,
+            setActiveTradingModule: action.bound,
+            registerTradingStopHandler: action.bound,
+            unregisterTradingStopHandler: action.bound,
+            stopActiveTradingModule: action.bound,
             setActiveTabTutorial: action.bound,
             setWebSocketState: action.bound,
             setFAQSearchValue: action.bound,
@@ -179,6 +190,8 @@ export default class DashboardStore implements IDashboardStore {
     }
 
     active_tab = 0;
+    active_trading_module: string | null = null;
+    trading_stop_handlers: Record<string, () => void> = {};
     active_tab_tutorials = 0;
     active_tour_step_number = 0;
     dialog_options: TDialogOptions = {};
@@ -348,6 +361,23 @@ export default class DashboardStore implements IDashboardStore {
     setActiveTab = (active_tab: number): void => {
         this.active_tab = active_tab;
         localStorage.setItem('active_tab', active_tab.toString());
+    };
+
+    setActiveTradingModule = (active_trading_module: string | null): void => {
+        this.active_trading_module = active_trading_module;
+    };
+
+    registerTradingStopHandler = (module_id: string, handler: () => void): void => {
+        this.trading_stop_handlers[module_id] = handler;
+    };
+
+    unregisterTradingStopHandler = (module_id: string): void => {
+        delete this.trading_stop_handlers[module_id];
+    };
+
+    stopActiveTradingModule = (): void => {
+        if (!this.active_trading_module) return;
+        this.trading_stop_handlers[this.active_trading_module]?.();
     };
 
     setActiveTabTutorial = (active_tab_tutorials: number): void => {

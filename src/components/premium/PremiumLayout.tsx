@@ -6,6 +6,9 @@ import { generateOAuthURL } from '@/components/shared';
 import { DBOT_TABS } from '@/constants/bot-contents';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
+import AutoTradesPage from '@/pages/auto-trades/auto-trades';
+import ManualTradingPage from '@/pages/manual-trading';
+import TradingViewPage from '@/pages/tradingview';
 import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.service';
 import BottomStatusBar from './BottomStatusBar';
 import { getTemplateDomain } from './domain-brand';
@@ -61,13 +64,15 @@ import './premium-site-theme.scss';
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
     'manual_trading', 'bulk_trader', 'batch_trader', 'copy_trading', 'speedbot', 'calculator', 'pro_ai', 'analysis_tools',
-    'analysis_hub', 'charts', 'dtrader',
+    'analysis_hub', 'charts', 'tradingview', 'dtrader',
 ];
 
 const sectionFromHash = (hash: string): PremiumSection => {
     const value = hash.replace(/^#\/?/, '').split('?')[0] as PremiumSection;
     return validSections.includes(value) ? value : 'dashboard';
 };
+
+const isLocalDevelopmentHost = () => ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 const PremiumLayout = observer(() => {
     const { activeLoginid, isAuthorizing, setIsAuthorizing } = useApiBase();
@@ -84,7 +89,7 @@ const PremiumLayout = observer(() => {
     const isOAuthCallback = Boolean(params.get('code') && params.get('state'));
     const hasStoredAuth = OAuthTokenExchangeService.isAuthenticated();
     const runtimeAuthenticated = Boolean(activeLoginid || client?.is_logged_in);
-    const isAuthenticated = Boolean(runtimeAuthenticated || hasStoredAuth);
+    const isAuthenticated = Boolean(runtimeAuthenticated || hasStoredAuth || isLocalDevelopmentHost());
 
     useEffect(() => { document.title = getTemplateDomain(); }, []);
 
@@ -137,6 +142,12 @@ const PremiumLayout = observer(() => {
         };
     }, [activateNativeBotBuilder, isAuthenticated, section]);
 
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        if (section === 'auto_trader') dashboard?.setActiveTab(DBOT_TABS.AUTO_TRADES);
+        if (section === 'manual_trading') dashboard?.setActiveTab(DBOT_TABS.MANUAL_TRADING);
+    }, [dashboard, isAuthenticated, section]);
+
     const startOAuth = useCallback(async (prompt?: string) => {
         try {
             setIsAuthorizing(true);
@@ -186,8 +197,8 @@ const PremiumLayout = observer(() => {
             case 'bot_builder': return null;
             case 'free_bots': return <FreeBotsPage openBotBuilder={openBotBuilder} />;
             case 'signal_ai': return <SignalAIPage />;
-            case 'auto_trader': return <AutoTraderPage />;
-            case 'manual_trading': return <AdvancedManualTradingPage />;
+            case 'auto_trader': return <AutoTradesPage />;
+            case 'manual_trading': return <ManualTradingPage />;
             case 'bulk_trader': return <BulkTraderPage />;
             case 'batch_trader': return <BatchTraderPage />;
             case 'copy_trading': return <PatCopyTradingPage />;
@@ -197,6 +208,7 @@ const PremiumLayout = observer(() => {
             case 'analysis_tools': return <AnalysisToolsPage />;
             case 'analysis_hub': return <SourceAnalysisToolsPage />;
             case 'charts': return <ChartsPage />;
+            case 'tradingview': return <TradingViewPage />;
             case 'dtrader': return <DTraderPage />;
             default: return null;
         }

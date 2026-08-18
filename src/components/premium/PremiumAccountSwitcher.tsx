@@ -170,6 +170,22 @@ const PremiumAccountSwitcher = observer(() => {
     const activeBalance = client?.balance ?? active?.balance ?? 0;
     const activeCurrency = client?.currency || active?.currency || 'USD';
 
+    useEffect(() => {
+        if (!activeId) return;
+
+        setAccounts(current =>
+            current.map(account =>
+                account.account_id === activeId
+                    ? {
+                          ...account,
+                          balance: activeBalance,
+                          currency: activeCurrency || account.currency,
+                      }
+                    : account
+            )
+        );
+    }, [activeBalance, activeCurrency, activeId]);
+
     const selectAccount = async (account: DerivAccount) => {
         if (account.account_id === activeId || busy) {
             closeMenu();

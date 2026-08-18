@@ -104,6 +104,23 @@ export class DerivWSAccountsService {
         }
     }
 
+    static updateStoredAccountBalance(accountId: string, balance: string | number, currency?: string): void {
+        const accounts = this.getStoredAccounts();
+        if (!accounts?.length) return;
+
+        this.storeAccounts(
+            accounts.map(account =>
+                account.account_id === accountId
+                    ? {
+                          ...account,
+                          balance,
+                          currency: currency || account.currency,
+                      }
+                    : account
+            )
+        );
+    }
+
     static getDefaultAccount(): DerivAccount | null {
         return this.selectAccount(this.getStoredAccounts() || []);
     }

@@ -62,6 +62,12 @@ export default class GoogleDriveStore {
         this.setKey();
         this.client = null;
         this.access_token = localStorage.getItem('google_access_token') ?? '';
+
+        if (!this.hasGoogleDriveConfig()) {
+            ErrorLogger.warn('GoogleDrive', 'Skipping Google Drive initialization because credentials are not configured.');
+            return;
+        }
+
         setTimeout(() => {
             importExternal('https://accounts.google.com/gsi/client').then(() => this.initialiseClient());
             importExternal('https://apis.google.com/js/api.js').then(() => this.initialise());
@@ -83,6 +89,8 @@ export default class GoogleDriveStore {
         this.scope = SCOPE;
         this.discovery_docs = DISCOVERY_DOCS;
     };
+
+    hasGoogleDriveConfig = () => Boolean(this.client_id && this.app_id && this.api_key && this.scope);
 
     initialise = () => {
         gapi.load('client:picker', () => gapi.client.load(this.discovery_docs));

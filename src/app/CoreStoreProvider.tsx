@@ -5,9 +5,11 @@ import { toMoment } from '@/components/shared';
 import { FORM_ERROR_MESSAGES } from '@/components/shared/constants/form-error-messages';
 import { initFormErrorMessages } from '@/components/shared/utils/validation/declarative-validation-rules';
 import { api_base } from '@/external/bot-skeleton';
+import { updateAuthBalance } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useLogout } from '@/hooks/useLogout';
 import { useStore } from '@/hooks/useStore';
+import { DerivWSAccountsService } from '@/services/derivws-accounts.service';
 import { TSocketResponseData } from '@/types/api-types';
 import { clearInvalidTokenParams } from '@/utils/url-utils';
 import { useTranslations } from '@deriv-com/translations';
@@ -137,17 +139,21 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
             if (msg_type === 'balance' && data && !error) {
                 const balance = data.balance;
                 if (balance && typeof balance.balance === 'number') {
+                    const loginid = balance.loginid || client.loginid || activeLoginid;
+                    const currency = balance.currency || client.currency;
                     client.setBalance(balance.balance.toString());
 
-                    if (balance.currency) {
-                        client.setCurrency(balance.currency);
+                    if (currency) client.setCurrency(currency);
+                    if (loginid) {
+                        updateAuthBalance(loginid, balance.balance, currency);
+                        DerivWSAccountsService.updateStoredAccountBalance(loginid, balance.balance, currency);
                     }
                 }
             }
         },
         // Fixed memory leak: removed handleLogout from deps as it's not used in function body
         // Only client is actually referenced (line 129), preventing unnecessary re-subscriptions
-        [client]
+        [activeLoginid, client]
     );
 
     useEffect(() => {

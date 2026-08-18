@@ -1,9 +1,10 @@
 import { useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { observer } from 'mobx-react-lite';
+import useThemeSwitcher from '@/hooks/useThemeSwitcher';
 import BrandMark from './BrandMark';
 import PremiumAccountSwitcher from './PremiumAccountSwitcher';
-import { CalculatorIcon, CopyIcon, GearIcon, GridIcon, HomeIcon, RobotIcon, SearchIcon } from './icons';
+import { BoltIcon, CalculatorIcon, CopyIcon, GearIcon, GridIcon, HomeIcon, MoonIcon, RobotIcon, SearchIcon, SunIcon } from './icons';
 import { NAVIGATION_CATALOG } from './site-customization';
 import PremiumTicker from './PremiumTicker';
 import type { PremiumSection } from './types';
@@ -12,6 +13,9 @@ const NAV_ICONS: Partial<Record<PremiumSection, typeof HomeIcon>> = {
     dashboard: HomeIcon,
     bot_builder: GearIcon,
     free_bots: RobotIcon,
+    auto_trader: RobotIcon,
+    manual_trading: BoltIcon,
+    tradingview: SearchIcon,
     bulk_trader: GridIcon,
     batch_trader: GridIcon,
     speedbot: GridIcon,
@@ -27,6 +31,7 @@ const PremiumHeader = observer(
         const navRef = useRef<HTMLElement | null>(null);
         const dragRef = useRef({ active: false, pointerId: -1, startX: 0, scrollLeft: 0, moved: false });
         const suppressClickRef = useRef(false);
+        const { is_dark_mode_on, toggleTheme } = useThemeSwitcher();
 
         const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
             if (event.pointerType !== 'mouse' || event.button !== 0 || !navRef.current) return;
@@ -83,7 +88,19 @@ const PremiumHeader = observer(
                     <button className='prodb-app-header__brand' onClick={() => onChange('dashboard')}>
                         <BrandMark />
                     </button>
-                    <PremiumAccountSwitcher />
+                    <div className='prodb-app-header__actions'>
+                        <button
+                            type='button'
+                            className={`prodb-theme-toggle ${is_dark_mode_on ? 'is-dark' : 'is-light'}`}
+                            onClick={toggleTheme}
+                            aria-label={is_dark_mode_on ? 'Switch to light mode' : 'Switch to dark mode'}
+                            title={is_dark_mode_on ? 'Light mode' : 'Dark mode'}
+                            aria-pressed={is_dark_mode_on}
+                        >
+                            {is_dark_mode_on ? <MoonIcon /> : <SunIcon />}
+                        </button>
+                        <PremiumAccountSwitcher />
+                    </div>
                 </div>
                 <nav
                     ref={navRef}

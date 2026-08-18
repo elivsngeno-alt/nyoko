@@ -12,5 +12,7 @@ export const CopyIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><rect x='4'
 export const ChartIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><path d='M4 20V9M10 20V4M16 20v-7M22 20H2' /></Icon>;
 export const SearchIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><circle cx='11' cy='11' r='7' /><path d='m20 20-4-4' /></Icon>;
 export const CalculatorIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><rect x='5' y='2.5' width='14' height='19' rx='2' /><path d='M8 6h8v3H8zM8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01' /></Icon>;
+export const MoonIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><path d='M21 14.2A7.6 7.6 0 0 1 9.8 3 8.8 8.8 0 1 0 21 14.2Z' /></Icon>;
+export const SunIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><circle cx='12' cy='12' r='4' /><path d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' /></Icon>;
 export const DownloadIcon = (p: SVGProps<SVGSVGElement>) => <Icon {...p}><path d='M12 3v12M7 10l5 5 5-5M5 21h14' /></Icon>;
 export const PlayIcon = (p: SVGProps<SVGSVGElement>) => <svg viewBox='0 0 24 24' fill='currentColor' {...p}><path d='M7 4.7v14.6c0 .8.9 1.3 1.6.9l11-7.3a1.1 1.1 0 0 0 0-1.8l-11-7.3A1 1 0 0 0 7 4.7Z' /></svg>;

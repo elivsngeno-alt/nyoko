@@ -35,3 +35,23 @@ export const setAuthData = (authData: TAuthData | null) => {
     if (authData?.loginid) localStorage.setItem('active_loginid', authData.loginid);
     authData$.next(authData);
 };
+
+export const updateAuthBalance = (loginid: string, balance: number, currency?: string) => {
+    const current = authData$.value;
+    if (!current || current.loginid !== loginid) return;
+
+    authData$.next({
+        ...current,
+        balance,
+        currency: currency || current.currency,
+        account_list: current.account_list?.map(account =>
+            account.loginid === loginid
+                ? {
+                      ...account,
+                      balance,
+                      currency: currency || account.currency,
+                  }
+                : account
+        ),
+    });
+};

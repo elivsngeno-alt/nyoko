@@ -204,7 +204,12 @@ class APIBase {
         const hasAccountID = V2GetActiveAccountId();
 
         if (!this.has_active_symbols && !hasAccountID) {
-            this.active_symbols_promise = this.getActiveSymbols().then(() => undefined);
+            this.active_symbols_promise = this.getActiveSymbols()
+                .then(() => undefined)
+                .catch(error => {
+                    console.warn('[APIBase] Active symbols unavailable during bootstrap:', this.formatSubscriptionError(error));
+                    return undefined;
+                });
         }
 
         this.initEventListeners();
