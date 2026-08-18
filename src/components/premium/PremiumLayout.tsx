@@ -56,6 +56,7 @@ import './premium-ai-scanner-v2.scss';
 import './premium-execution-fixes.scss';
 import './premium-calculator.scss';
 import './premium-wallet.scss';
+import './premium-site-theme.scss';
 
 const validSections: PremiumSection[] = [
     'dashboard', 'bot_ideas', 'quick_bot', 'bot_builder', 'free_bots', 'signal_ai', 'auto_trader',
