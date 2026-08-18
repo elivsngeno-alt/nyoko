@@ -4,6 +4,7 @@
   "navigation": [
     "dashboard",
     "free_bots",
+    "bot_builder",
     "bulk_trader",
     "batch_trader",
     "speedbot",
