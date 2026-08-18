@@ -16,6 +16,33 @@ type TrackedContract = {
 const sleep = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms));
 const unwrap = (value: any): ApiResponse => (value?.data && typeof value.data === 'object' ? value.data : value || {});
 
+export const tradingErrorMessage = (value: unknown, fallback = 'Deriv trading request failed.'): string => {
+    if (value instanceof Error && value.message) return value.message;
+    if (typeof value === 'string' && value.trim()) return value;
+
+    const root = value && typeof value === 'object' ? value as Record<string, any> : null;
+    const nested = root?.error && typeof root.error === 'object' ? root.error as Record<string, any> : root;
+    const message = nested?.message ?? root?.message;
+    const code = nested?.code ?? root?.code;
+
+    if (typeof message === 'string' && message.trim()) {
+        return typeof code === 'string' && code && !message.includes(code) ? `${message} (${code})` : message;
+    }
+    if (typeof code === 'string' && code.trim()) return code;
+
+    return fallback;
+};
+
+const toTradingError = (value: unknown, fallback?: string): Error => {
+    if (value instanceof Error) return value;
+    const error = new Error(tradingErrorMessage(value, fallback));
+    const root = value && typeof value === 'object' ? value as Record<string, any> : null;
+    const nested = root?.error && typeof root.error === 'object' ? root.error as Record<string, any> : root;
+    const code = nested?.code ?? root?.code;
+    if (code) (error as Error & { code?: string }).code = String(code);
+    return error;
+};
+
 export class PremiumDerivApiService {
     private static requestId = 1000;
     private static contractListeners = new Set<ContractUpdateListener>();
@@ -25,19 +52,33 @@ export class PremiumDerivApiService {
     private static async getApi(): Promise<any> {
         if (!api_base.api) await api_base.init(true);
 
-        for (let attempt = 0; attempt < 80; attempt += 1) {
+        const requiresAuthenticatedAccount = Boolean(OAuthTokenExchangeService.getAccessToken());
+        let socketOpened = false;
+
+        for (let attempt = 0; attempt < 120; attempt += 1) {
             const api: any = api_base.api;
-            if (api?.connection?.readyState === WebSocket.OPEN) return api;
+            if (api?.connection?.readyState === WebSocket.OPEN) {
+                socketOpened = true;
+                if (!requiresAuthenticatedAccount || api_base.is_authorized) return api;
+            }
             await sleep(125);
+        }
+
+        if (socketOpened && requiresAuthenticatedAccount && !api_base.is_authorized) {
+            throw new Error('Deriv account connection opened but authentication did not complete. Reconnect the selected account and try again.');
         }
         throw new Error('Deriv WebSocket is not ready. Please reconnect and try again.');
     }
 
     static async request(payload: ApiPayload): Promise<ApiResponse> {
-        const api = await this.getApi();
-        const result = unwrap(await api.send({ ...payload, req_id: ++this.requestId }));
-        if (result?.error) throw new Error(result.error.message || result.error.code || 'Deriv API request failed.');
-        return result;
+        try {
+            const api = await this.getApi();
+            const result = unwrap(await api.send({ ...payload, req_id: ++this.requestId }));
+            if (result?.error) throw result;
+            return result;
+        } catch (error) {
+            throw toTradingError(error);
+        }
     }
 
     static activeSymbols = async () => {
@@ -76,12 +117,12 @@ export class PremiumDerivApiService {
 
         try {
             const response = unwrap(await api.send({ ticks: underlyingSymbol, subscribe: 1, req_id: ++this.requestId }));
-            if (response?.error) throw new Error(response.error.message || 'Unable to subscribe to ticks.');
+            if (response?.error) throw response;
             subscriptionId = response.subscription?.id || response.tick?.id || subscriptionId;
             if (response.tick) callback(response.tick);
         } catch (error) {
             observer.unsubscribe();
-            throw error;
+            throw toTradingError(error, 'Unable to subscribe to ticks.');
         }
 
         return () => {
@@ -100,6 +141,7 @@ export class PremiumDerivApiService {
         duration_unit?: 'd' | 'm' | 's' | 'h' | 't';
         barrier?: string;
         barrier2?: string;
+        selected_tick?: number;
         multiplier?: number;
         growth_rate?: number;
     }) {
@@ -118,8 +160,7 @@ export class PremiumDerivApiService {
         return Boolean(
             terminalStatus ||
             contract.is_sold ||
-            contract.is_expired ||
-            contract.is_settleable ||
+            (contract.is_expired && hasFinalProfit) ||
             (exitTime > 0 && hasFinalProfit && status !== 'open')
         );
     }
@@ -135,7 +176,7 @@ export class PremiumDerivApiService {
             try {
                 listener(contract);
             } catch (error) {
-                console.warn('[PremiumDerivAPI] Contract update listener failed:', error);
+                console.warn('[PremiumDerivAPI] Contract update listener failed:', tradingErrorMessage(error));
             }
         });
     }
@@ -183,7 +224,7 @@ export class PremiumDerivApiService {
                 subscribe: 1,
                 req_id: ++this.requestId,
             }));
-            if (response?.error) throw new Error(response.error.message || response.error.code || 'Unable to track purchased contract.');
+            if (response?.error) throw response;
 
             subscriptionId = response?.subscription?.id || subscriptionId;
             const tracked = this.trackedContracts.get(id);
@@ -195,14 +236,14 @@ export class PremiumDerivApiService {
         } catch (error) {
             this.cleanupTrackedContract(id);
             try { observer?.unsubscribe?.(); } catch { /* already disposed */ }
-            console.warn(`[PremiumDerivAPI] Could not attach settlement stream for contract ${id}:`, error instanceof Error ? error.message : error);
+            console.warn(`[PremiumDerivAPI] Could not attach settlement stream for contract ${id}:`, tradingErrorMessage(error));
         } finally {
             this.trackingInFlight.delete(id);
         }
     }
 
     static async buy(proposalId: string, maximumPrice: number) {
-        const result = await this.request({ buy: proposalId, price: maximumPrice });
+        const result = await this.request({ buy: proposalId, price: Math.max(0, Number(maximumPrice) || 0) });
         if (!result.buy) throw new Error('Deriv did not return a purchased contract.');
         const contractId = Math.trunc(Number(result.buy.contract_id || 0));
         if (contractId > 0) void this.trackContract(contractId);
@@ -210,7 +251,7 @@ export class PremiumDerivApiService {
     }
 
     static async sell(contractId: number, price = 0) {
-        const result = await this.request({ sell: contractId, price });
+        const result = await this.request({ sell: contractId, price: Math.max(0, Number(price) || 0) });
         if (result?.sell) this.emitContractUpdate({ ...result.sell, contract_id: contractId, status: 'sold', is_sold: 1 });
         return result.sell;
     }
@@ -272,7 +313,7 @@ export class PremiumDerivApiService {
                 if (data.req_id !== currentId) return;
                 window.clearTimeout(timer);
                 socket.removeEventListener('message', onMessage);
-                if (data.error) reject(new Error(data.error.message || data.error.code || 'Deriv API request failed.'));
+                if (data.error) reject(toTradingError(data));
                 else resolve(data);
             };
             socket.addEventListener('message', onMessage);
@@ -299,7 +340,7 @@ export class PremiumDerivApiService {
                 });
                 return { account_id: accountId, ok: true, result };
             } catch (error) {
-                return { account_id: accountId, ok: false, error: error instanceof Error ? error.message : String(error) };
+                return { account_id: accountId, ok: false, error: tradingErrorMessage(error) };
             }
         }));
     }

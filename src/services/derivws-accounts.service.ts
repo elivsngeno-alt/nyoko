@@ -61,6 +61,21 @@ export class DerivWSAccountsService {
         }
     }
 
+    private static activeAccounts(accounts: DerivAccount[]): DerivAccount[] {
+        return accounts.filter(account => account?.account_id && (!account.status || account.status === 'active'));
+    }
+
+    private static selectAccount(accounts: DerivAccount[]): DerivAccount | null {
+        const usable = this.activeAccounts(accounts);
+        const activeLoginId = localStorage.getItem('active_loginid');
+        return (activeLoginId && usable.find(account => account.account_id === activeLoginId)) || usable[0] || null;
+    }
+
+    private static persistSelectedAccount(account: DerivAccount): void {
+        localStorage.setItem('active_loginid', account.account_id);
+        localStorage.setItem('account_type', account.account_type === 'demo' ? 'demo' : 'real');
+    }
+
     static clearCache(): void {
         this.accountsFetchPromise = null;
         this.otpFetchPromises.clear();
@@ -90,7 +105,7 @@ export class DerivWSAccountsService {
     }
 
     static getDefaultAccount(): DerivAccount | null {
-        return this.getStoredAccounts()?.[0] || null;
+        return this.selectAccount(this.getStoredAccounts() || []);
     }
 
     static clearStoredAccounts(): void {
@@ -117,7 +132,7 @@ export class DerivWSAccountsService {
                 }
 
                 const data: AccountsResponse = await response.json();
-                const accounts = Array.isArray(data?.data) ? data.data : [];
+                const accounts = Array.isArray(data?.data) ? this.activeAccounts(data.data) : [];
                 this.storeAccounts(accounts);
                 return accounts;
             } catch (error) {
@@ -200,12 +215,23 @@ export class DerivWSAccountsService {
     static async getAuthenticatedWebSocketURL(accessToken: string): Promise<string> {
         let accounts = this.getStoredAccounts();
         if (!accounts?.length) accounts = await this.fetchAccountsList(accessToken);
-        if (!accounts?.length) throw new Error('No Deriv Options accounts are available for this user.');
+        let targetAccount = this.selectAccount(accounts || []);
+        if (!targetAccount) throw new Error('No active Deriv Options accounts are available for this user.');
 
-        const activeLoginId = localStorage.getItem('active_loginid');
-        const targetAccount =
-            (activeLoginId && accounts.find(account => account.account_id === activeLoginId)) || accounts[0];
+        this.persistSelectedAccount(targetAccount);
 
-        return this.fetchOTPWebSocketURL(accessToken, targetAccount.account_id);
+        try {
+            return await this.fetchOTPWebSocketURL(accessToken, targetAccount.account_id);
+        } catch (firstError) {
+            // Stored account data can become stale after account changes or a new
+            // OAuth session. Refresh once instead of silently falling back to the
+            // public socket, which would make charts work while every buy fails.
+            console.warn('[DerivWS] Stored account OTP failed. Refreshing the account list once.');
+            const refreshedAccounts = await this.refreshAccounts(accessToken);
+            targetAccount = this.selectAccount(refreshedAccounts);
+            if (!targetAccount) throw firstError;
+            this.persistSelectedAccount(targetAccount);
+            return this.fetchOTPWebSocketURL(accessToken, targetAccount.account_id);
+        }
     }
 }

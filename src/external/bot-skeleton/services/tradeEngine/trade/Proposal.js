@@ -3,6 +3,8 @@ import { api_base } from '../../api/api-base';
 import { doUntilDone, tradeOptionToProposal } from '../utils/helpers';
 import { clearProposals, proposalsReady } from './state/actions';
 
+const normalizedApiError = value => value?.error || value || {};
+
 export default Engine =>
     class Proposal extends Engine {
         makeProposals(trade_option) {
@@ -30,12 +32,7 @@ export default Engine =>
                     proposal.contract_type === contract_type &&
                     proposal.purchase_reference === this.getPurchaseReference()
                 ) {
-                    // Below happens when a user has had one of the proposals return
-                    // with a ContractBuyValidationError. We allow the logic to continue
-                    // to here cause the opposite proposal may still be valid. Only once
-                    // they attempt to purchase the errored proposal we will intervene.
                     if (proposal.error) {
-                        // Ensure we throw the localized error message
                         throw proposal.error;
                     }
 
@@ -62,43 +59,38 @@ export default Engine =>
         }
 
         requestProposals() {
-            // Since there are two proposals (in most cases), an error may be logged twice, to avoid this
-            // flip this boolean on error.
             let has_informed_error = false;
 
             Promise.all(
                 this.proposal_templates.map(proposal => {
                     doUntilDone(() => api_base.api.send(proposal)).catch(error => {
-                        // We intercept ContractBuyValidationError as user may have specified
-                        // e.g. a DIGITUNDER 0 or DIGITOVER 9, while one proposal may be invalid
-                        // the other is valid. We will error on Purchase rather than here.
+                        const apiError = normalizedApiError(error);
+                        const code = apiError?.code || error?.code || '';
 
-                        if (error?.error?.code === 'ContractBuyValidationError') {
-                            // Create localized error message for validation errors
-                            const localizedError = new Error(getLocalizedErrorMessage(error.error.code, error.error));
-                            localizedError.code = error.error.code;
-                            localizedError.details = error.error.details;
-                            localizedError.message_to_client = error.error.message_to_client;
+                        if (code === 'ContractBuyValidationError') {
+                            const localizedError = new Error(getLocalizedErrorMessage(code, apiError));
+                            localizedError.code = code;
+                            localizedError.details = apiError?.details;
+                            localizedError.message_to_client = apiError?.message_to_client;
 
                             this.data.proposals.push({
-                                ...error.error.echo_req,
-                                ...error.echo_req.passthrough,
+                                ...(apiError?.echo_req || error?.echo_req || {}),
+                                ...(error?.echo_req?.passthrough || proposal?.passthrough || {}),
                                 error: localizedError,
                             });
 
+                            this.checkProposalReady();
                             return null;
                         }
+
                         if (!has_informed_error) {
                             has_informed_error = true;
-                            // Use localized error message for general errors
-                            const localizedErrorMessage = error.error.code
-                                ? getLocalizedErrorMessage(error.error.code, error.error)
-                                : error.error.message || getLocalizedErrorMessage('GeneralError');
-
-                            const localizedError = {
-                                ...error.error,
-                                message: localizedErrorMessage,
-                            };
+                            const localizedErrorMessage = code
+                                ? getLocalizedErrorMessage(code, apiError)
+                                : apiError?.message || error?.message || getLocalizedErrorMessage('GeneralError');
+                            const localizedError = new Error(localizedErrorMessage);
+                            localizedError.code = code || 'ProposalError';
+                            localizedError.details = apiError?.details;
                             this.$scope.observer.emit('Error', localizedError);
                         }
                         return null;
@@ -113,7 +105,6 @@ export default Engine =>
                 if (response.data.msg_type === 'proposal') {
                     const { passthrough, proposal, error } = response.data;
 
-                    // Handle proposal errors with localized messages
                     if (error) {
                         const localizedError = new Error(getLocalizedErrorMessage(error.code, error));
                         localizedError.code = error.code;
@@ -124,11 +115,11 @@ export default Engine =>
                             ...passthrough,
                             error: localizedError,
                         });
+                        this.checkProposalReady();
                         return;
                     }
 
                     if (proposal && this.data.proposals.findIndex(p => p.id === proposal.id) === -1) {
-                        // Add proposals based on the ID returned by the API.
                         this.data.proposals.push({ ...proposal, ...passthrough });
                         this.checkProposalReady();
                     }
@@ -138,8 +129,6 @@ export default Engine =>
         }
 
         checkProposalReady() {
-            // Proposals are considered ready when the proposals in our memory match the ones
-            // we've requested from the API, we determine this by checking the passthrough of the response.
             const { proposals } = this.data;
 
             if (proposals.length > 0 && this.proposal_templates) {
@@ -166,9 +155,6 @@ export default Engine =>
                 return true;
             }
 
-            // Compare incoming "trade_option" argument with "this.trade_option", if any
-            // of the values is different, this is a new tradeOption and new proposals
-            // should be generated.
             return [
                 'amount',
                 'barrierOffset',
@@ -177,7 +163,7 @@ export default Engine =>
                 'duration_unit',
                 'prediction',
                 'secondBarrierOffset',
-                'underlying_symbol',
+                'symbol',
             ].some(value => this.trade_option[value] !== trade_option[value]);
         }
     };

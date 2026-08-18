@@ -35,25 +35,29 @@ export default Engine =>
         }
 
         updateTotals(contract) {
-            const { sell_price: sellPrice, buy_price: buyPrice, currency } = contract;
-
-            const profit = getRoundedNumber(Number(sellPrice) - Number(buyPrice), currency);
-
-            const win = profit > 0;
+            const currency = contract?.currency;
+            const buyPrice = Number(contract?.buy_price ?? 0);
+            const responseProfit = Number(contract?.profit);
+            const responseSellPrice = Number(contract?.sell_price);
+            const hasProfit = Number.isFinite(responseProfit);
+            const sellPrice = Number.isFinite(responseSellPrice)
+                ? responseSellPrice
+                : hasProfit
+                  ? buyPrice + responseProfit
+                  : 0;
+            const profit = getRoundedNumber(hasProfit ? responseProfit : sellPrice - buyPrice, currency);
+            const status = String(contract?.status || '').toLowerCase();
+            const win = status === 'won' || (status !== 'lost' && profit > 0);
 
             const accountStat = this.getAccountStat();
 
             accountStat.totalWins += win ? 1 : 0;
-
             accountStat.totalLosses += !win ? 1 : 0;
 
             this.sessionProfit = getRoundedNumber(Number(this.sessionProfit) + Number(profit), currency);
-
             accountStat.totalProfit = getRoundedNumber(Number(accountStat.totalProfit) + Number(profit), currency);
-
-            accountStat.totalStake = getRoundedNumber(Number(accountStat.totalStake) + Number(buyPrice), currency);
-
-            accountStat.totalPayout = getRoundedNumber(Number(accountStat.totalPayout) + Number(sellPrice), currency);
+            accountStat.totalStake = getRoundedNumber(Number(accountStat.totalStake) + buyPrice, currency);
+            accountStat.totalPayout = getRoundedNumber(Number(accountStat.totalPayout) + sellPrice, currency);
 
             info({
                 profit,

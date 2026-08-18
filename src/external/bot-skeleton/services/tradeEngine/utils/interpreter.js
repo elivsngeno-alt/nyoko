@@ -31,6 +31,18 @@ const shouldStopOnError = (bot, errorName = '') => {
     return false;
 };
 
+const normalizeTradingError = value => {
+    if (value instanceof Error) return value;
+    const root = value && typeof value === 'object' ? value : {};
+    const nested = root?.error && typeof root.error === 'object' ? root.error : root;
+    const message = nested?.message || root?.message || nested?.code || root?.code || (typeof value === 'string' ? value : 'Trading request failed.');
+    const error = new Error(String(message));
+    const code = nested?.code || root?.code;
+    if (code) error.code = String(code);
+    error.details = value;
+    return error;
+};
+
 const timeMachineEnabled = bot => botInitialized(bot) && bot.tradeEngine.options.timeMachineEnabled;
 
 // TODO chek beforState & duringState & startState
@@ -81,8 +93,7 @@ const Interpreter = () => {
                     loop();
                 })
                 .catch(e => {
-                    // e.error for errors get from API, e for code errors
-                    $scope.observer.emit('Error', e.error || e);
+                    $scope.observer.emit('Error', normalizeTradingError(e));
                 });
         };
 
@@ -199,7 +210,7 @@ const Interpreter = () => {
                     });
                 }
             } catch (e) {
-                reject(e);
+                reject(normalizeTradingError(e));
             }
         });
     }
@@ -219,7 +230,7 @@ const Interpreter = () => {
                     resolve();
                 });
             } catch (error) {
-                reject(error);
+                reject(normalizeTradingError(error));
             }
         });
     }
@@ -232,14 +243,15 @@ const Interpreter = () => {
                     resolve();
                 });
             } catch (e) {
-                reject(e);
+                reject(normalizeTradingError(e));
             }
         });
     }
 
     function run(code) {
         return new Promise((resolve, reject) => {
-            const onError = e => {
+            const onError = rawError => {
+                const e = normalizeTradingError(rawError);
                 if ($scope.stopped) {
                     return;
                 }

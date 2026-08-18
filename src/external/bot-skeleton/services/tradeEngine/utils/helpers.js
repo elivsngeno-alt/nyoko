@@ -5,6 +5,8 @@ import { localize } from '@deriv-com/translations';
 import { observer as globalObserver } from '../../../utils/observer';
 import { error as logError } from './broadcast';
 
+const hasPrediction = value => value !== undefined && value !== null && value !== '';
+
 export const tradeOptionToProposal = (trade_option, purchase_reference) =>
     trade_option.contractTypes.map(type => {
         const proposal = {
@@ -22,10 +24,11 @@ export const tradeOptionToProposal = (trade_option, purchase_reference) =>
             proposal: 1,
             underlying_symbol: trade_option.symbol,
         };
-        if (trade_option.prediction !== undefined) {
+        const predictionDefined = hasPrediction(trade_option.prediction);
+        if (['TICKLOW', 'TICKHIGH'].includes(type) && predictionDefined) {
             proposal.selected_tick = trade_option.prediction;
-        }
-        if (!['TICKLOW', 'TICKHIGH'].includes(type) && trade_option.prediction !== undefined) {
+        } else if (predictionDefined) {
+            // Current Deriv API uses barrier as the last-digit prediction for digit contracts.
             proposal.barrier = trade_option.prediction;
         } else if (trade_option.barrierOffset !== undefined) {
             proposal.barrier = trade_option.barrierOffset;
@@ -58,10 +61,10 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
             underlying_symbol: trade_option.symbol,
         },
     };
-    if (trade_option.prediction !== undefined) {
+    const predictionDefined = hasPrediction(trade_option.prediction);
+    if (['TICKLOW', 'TICKHIGH'].includes(contract_type) && predictionDefined) {
         buy.parameters.selected_tick = trade_option.prediction;
-    }
-    if (!['TICKLOW', 'TICKHIGH'].includes(contract_type) && trade_option.prediction !== undefined) {
+    } else if (predictionDefined) {
         buy.parameters.barrier = trade_option.prediction;
     } else if (trade_option.barrierOffset !== undefined) {
         buy.parameters.barrier = trade_option.barrierOffset;
@@ -72,20 +75,8 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
     if (!isEmptyObject(trade_option.app_markup_percentage)) {
         buy.parameters.app_markup_percentage = trade_option.app_markup_percentage;
     }
-    if (!isEmptyObject(trade_option.barrier_range)) {
-        buy.parameters.barrier_range = trade_option.barrier_range;
-    }
     if (!isEmptyObject(trade_option.date_expiry)) {
         buy.parameters.date_expiry = trade_option.date_expiry;
-    }
-    if (!isEmptyObject(trade_option.date_start)) {
-        buy.parameters.date_start = trade_option.date_start;
-    }
-    if (!isEmptyObject(trade_option.product_type)) {
-        buy.parameters.product_type = trade_option.product_type;
-    }
-    if (!isEmptyObject(trade_option.trading_period_start)) {
-        buy.parameters.trading_period_start = trade_option.trading_period_start;
     }
     // This will be required only in the case of multiplier & accumulator contracts
     if (!isEmptyObject(trade_option.limit_order)) {
@@ -95,7 +86,6 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
     if (['MULTUP', 'MULTDOWN'].includes(contract_type)) {
         buy.parameters.duration = undefined;
         buy.parameters.duration_unit = undefined;
-
         buy.parameters.multiplier = trade_option.multiplier;
     }
     // This will be required only in the case of accumulator contracts
@@ -299,21 +289,33 @@ export const doUntilDone = (promiseFn, errors_to_ignore, api_base) => {
 };
 
 export const createDetails = contract => {
-    const { sell_price: sellPrice, buy_price: buyPrice, currency } = contract;
-    const profit = getRoundedNumber(sellPrice - buyPrice, currency);
-    const result = profit < 0 ? 'loss' : 'win';
+    const currency = contract?.currency;
+    const buyPrice = Number(contract?.buy_price ?? 0);
+    const responseProfit = Number(contract?.profit);
+    const hasResponseProfit = Number.isFinite(responseProfit);
+    const responseSellPrice = Number(contract?.sell_price);
+    const sellPrice = Number.isFinite(responseSellPrice)
+        ? responseSellPrice
+        : hasResponseProfit
+          ? buyPrice + responseProfit
+          : 0;
+    const profit = getRoundedNumber(hasResponseProfit ? responseProfit : sellPrice - buyPrice, currency);
+    const status = String(contract?.status || '').toLowerCase();
+    const result = status === 'lost' || profit < 0 ? 'loss' : 'win';
+    const entryTime = Number(contract?.entry_tick_time ?? contract?.entry_spot_time ?? 0);
+    const exitTime = Number(contract?.exit_tick_time ?? contract?.exit_spot_time ?? 0);
 
     return [
-        contract.transaction_ids.buy,
-        +contract.buy_price,
-        +contract.sell_price,
+        contract?.transaction_ids?.buy ?? contract?.buy_transaction_id ?? contract?.contract_id ?? 0,
+        buyPrice,
+        sellPrice,
         profit,
-        contract.contract_type,
-        formatTime(parseInt(`${contract.entry_tick_time}000`), 'HH:mm:ss'),
-        +contract.entry_tick,
-        formatTime(parseInt(`${contract.exit_tick_time}000`), 'HH:mm:ss'),
-        +contract.exit_tick,
-        +(contract.barrier ? contract.barrier : 0),
+        contract?.contract_type ?? '',
+        entryTime ? formatTime(parseInt(`${entryTime}000`), 'HH:mm:ss') : '',
+        Number(contract?.entry_tick ?? contract?.entry_spot ?? 0),
+        exitTime ? formatTime(parseInt(`${exitTime}000`), 'HH:mm:ss') : '',
+        Number(contract?.exit_tick ?? contract?.exit_spot ?? 0),
+        Number(contract?.barrier ?? 0),
         result,
     ];
 };

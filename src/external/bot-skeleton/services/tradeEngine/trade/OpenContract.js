@@ -129,17 +129,21 @@ export default Engine =>
         }
 
         setContractFlags(contract) {
-            const { is_expired, is_settleable, is_valid_to_sell, is_sold, entry_tick, entry_spot } = contract;
+            const { is_expired, is_valid_to_sell, is_sold, entry_tick, entry_spot } = contract;
             const status = String(contract.status || '').toLowerCase();
+            const hasFinalProfit = contract.profit !== undefined && contract.profit !== null && contract.profit !== '';
+
+            // `is_settleable` means the position can be settled, not that it has
+            // already settled. Likewise, an expiry flag can arrive before the final
+            // P/L update. After Purchase must run only after final outcome data exists.
             const terminal =
                 Boolean(is_sold) ||
-                Boolean(is_expired) ||
-                Boolean(is_settleable) ||
-                TERMINAL_STATUSES.has(status);
+                TERMINAL_STATUSES.has(status) ||
+                (Boolean(is_expired) && hasFinalProfit);
 
             this.isSold = terminal;
             this.isSellAvailable = !terminal && Boolean(is_valid_to_sell);
-            this.isExpired = Boolean(is_expired) || status === 'expired';
+            this.isExpired = (Boolean(is_expired) && hasFinalProfit) || status === 'expired';
             this.hasEntryTick = Boolean(entry_tick ?? entry_spot);
         }
 
