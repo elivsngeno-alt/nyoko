@@ -39,6 +39,12 @@ const waitForWorkspace = async () => {
 const joinUrl = (base: string, file: string) =>
     `${base.replace(/\/$/, '')}/${file.split('/').map(segment => encodeURIComponent(segment)).join('/')}`;
 
+const githubRawUrlForLocalPath = (url: string): string => {
+    if (url === '/free-bots') return GITHUB_RAW_BOT_LIBRARY;
+    if (!url.startsWith('/free-bots/')) return '';
+    return joinUrl(GITHUB_RAW_BOT_LIBRARY, url.slice('/free-bots/'.length));
+};
+
 const fetchTextWithFallback = async (urls: string[], label: string): Promise<string> => {
     let lastError = '';
 
@@ -65,12 +71,27 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
     const site = getCurrentSiteConfig();
     const domain = getTemplateDomain();
     const configuredLibrary = site.bot_library;
-    const manifestUrl = configuredLibrary?.manifest_url || SHARED_BOT_LIBRARY.manifest_url;
+    const domainManifestUrl = `/free-bots/domains/${encodeURIComponent(site.id)}.json`;
+    const configuredManifestUrl = configuredLibrary?.manifest_url;
+    const usesManagedDomainManifest = !configuredManifestUrl || configuredManifestUrl === SHARED_BOT_LIBRARY.manifest_url;
+    const manifestUrl = usesManagedDomainManifest ? domainManifestUrl : configuredManifestUrl;
     const baseUrl =
         configuredLibrary?.base_url ||
-        (configuredLibrary?.manifest_url
-            ? configuredLibrary.manifest_url.replace(/\/[^/]*$/, '')
+        (configuredManifestUrl && !usesManagedDomainManifest
+            ? configuredManifestUrl.replace(/\/[^/]*$/, '')
             : SHARED_BOT_LIBRARY.base_url);
+    const manifestFallbacks = [manifestUrl, githubRawUrlForLocalPath(manifestUrl)];
+
+    // Existing sites inherit the shared library until the external bot manager
+    // publishes their first domain manifest. An intentionally empty domain
+    // manifest is still authoritative and therefore does not fall through.
+    if (usesManagedDomainManifest) {
+        manifestFallbacks.push(
+            SHARED_BOT_LIBRARY.manifest_url,
+            githubRawUrlForLocalPath(SHARED_BOT_LIBRARY.manifest_url)
+        );
+    }
+
     const [bots, setBots] = useState<DomainBot[]>([]);
     const [loading, setLoading] = useState(true);
     const [busyFile, setBusyFile] = useState('');
@@ -82,10 +103,7 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
             setLoading(true);
             setError('');
             try {
-                const manifestPayload = await fetchTextWithFallback(
-                    [manifestUrl, joinUrl(GITHUB_RAW_BOT_LIBRARY, 'bots.json')],
-                    'Bot manifest'
-                );
+                const manifestPayload = await fetchTextWithFallback(manifestFallbacks, 'Bot manifest');
                 const manifest = JSON.parse(manifestPayload);
                 const items = Array.isArray(manifest) ? manifest : Array.isArray(manifest?.bots) ? manifest.bots : [];
                 const clean = items
@@ -109,8 +127,10 @@ const FreeBotsPage = ({ openBotBuilder }: { openBotBuilder?: () => void }) => {
         setError('');
         try {
             const assetFile = bot.asset || bot.file;
+            const localAssetUrl = joinUrl(baseUrl, assetFile);
+            const rawAssetBase = githubRawUrlForLocalPath(baseUrl);
             const payload = await fetchTextWithFallback(
-                [joinUrl(baseUrl, assetFile), joinUrl(GITHUB_RAW_BOT_LIBRARY, assetFile)],
+                [localAssetUrl, rawAssetBase ? joinUrl(rawAssetBase, assetFile) : ''],
                 bot.name || bot.file
             );
             const xml = bot.encoding === 'gzip-base64' ? decodeGzipBase64(payload) : payload;
