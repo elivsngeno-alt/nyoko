@@ -129,13 +129,14 @@ export default Engine =>
         }
 
         setContractFlags(contract) {
-            const { is_expired, is_settleable, is_valid_to_sell, is_sold, entry_tick, entry_spot } = contract;
+            const { is_expired, is_valid_to_sell, is_sold, entry_tick, entry_spot } = contract;
             const status = String(contract.status || '').toLowerCase();
-            const terminal =
-                Boolean(is_sold) ||
-                Boolean(is_expired) ||
-                Boolean(is_settleable) ||
-                TERMINAL_STATUSES.has(status);
+
+            // `is_settleable` means the contract can be settled; it does not mean
+            // the contract has already settled. Ending Blockly on that flag caused
+            // After Purchase to run before the final status/profit arrived, which
+            // breaks loss detection and strategies such as Martingale/D'Alembert.
+            const terminal = Boolean(is_sold) || Boolean(is_expired) || TERMINAL_STATUSES.has(status);
 
             this.isSold = terminal;
             this.isSellAvailable = !terminal && Boolean(is_valid_to_sell);
