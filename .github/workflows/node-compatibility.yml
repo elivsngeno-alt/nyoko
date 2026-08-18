@@ -45,5 +45,8 @@ jobs:
       - name: Validate free bot assets
         run: node scripts/validate-free-bots.js
 
+      - name: Validate managed site customization
+        run: node scripts/validate-site-customization.js
+
       - name: Build production bundle
         run: npm run build
