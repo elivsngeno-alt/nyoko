@@ -4,14 +4,13 @@
   "count": 6,
   "bots": [
     {
-      "id": "wealth-g3-village-trader",
-      "name": "Wealth G3 by The Village Trader",
-      "file": "Wealth G3 by The Village Trader.xml",
-      "asset": "uploads/wealth-g3-by-the-village-trader.xml.gz.b64",
-      "description": "Uploaded Digit Under strategy for Volatility 10 (1s) Index.",
+      "id": "husseinfx-v1-c9440f71",
+      "name": "Husseinfx  v1",
+      "file": "Husseinfx  v1.xml",
+      "asset": "uploads/kicktrade/husseinfx-v1-c9440f71.xml",
+      "description": "Uploaded custom Blockly strategy.",
       "emoji": "CUSTOM",
-      "priority": 1,
-      "encoding": "gzip-base64"
+      "priority": 1
     },
     {
       "id": "even-odd-killer-village-trader",
