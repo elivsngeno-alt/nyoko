@@ -3,7 +3,6 @@
   "site_id": "kicktrade",
   "navigation": [
     "dashboard",
-    "bot_builder",
     "free_bots",
     "bulk_trader",
     "batch_trader",
@@ -13,9 +12,9 @@
     "calculator"
   ],
   "colors": {
-    "primary": "#030303",
+    "primary": "#4008c4",
     "secondary": "#19cba3",
-    "nav_background": "#003775",
+    "nav_background": "#1178ee",
     "nav_text": "#fafff5",
     "header_background": "#181616"
   }
