@@ -12,11 +12,12 @@
     "speedbot",
     "copy_trading",
     "analysis_tools",
-    "calculator"
+    "calculator",
+    "batch_trader"
   ],
   "colors": {
-    "primary": "#059669",
-    "secondary": "#19cba3",
+    "primary": "#020093",
+    "secondary": "#32c759",
     "nav_background": "#151d26",
     "nav_text": "#f3f6f8",
     "header_background": "#ffffff"
