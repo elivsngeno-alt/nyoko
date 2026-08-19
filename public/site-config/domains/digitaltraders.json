@@ -9,16 +9,15 @@
     "manual_trading",
     "tradingview",
     "bulk_trader",
-    "batch_trader",
     "speedbot",
-    "copy_trading",
+    "batch_trader",
     "analysis_tools",
     "calculator"
   ],
   "colors": {
     "primary": "#12d396",
-    "secondary": "#19cba3",
-    "nav_background": "#000000",
+    "secondary": "#00ffff",
+    "nav_background": "#0000ff",
     "nav_text": "#f0f0f0",
     "header_background": "#ffffff"
   }
