@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "site_id": "profitempire",
+  "navigation": [
+    "dashboard",
+    "bot_builder",
+    "free_bots",
+    "auto_trader",
+    "manual_trading",
+    "tradingview",
+    "bulk_trader",
+    "batch_trader",
+    "speedbot",
+    "copy_trading",
+    "analysis_tools",
+    "calculator"
+  ],
+  "colors": {
+    "primary": "#0000ff",
+    "secondary": "#ff0000",
+    "nav_background": "#0000ff",
+    "nav_text": "#ff00ff",
+    "header_background": "#ff0000"
+  }
+}
