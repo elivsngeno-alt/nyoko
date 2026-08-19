@@ -32,6 +32,7 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
     const accountInitialization = useRef(false);
     const timeInterval = useRef<NodeJS.Timeout | null>(null);
     const msg_listener = useRef<{ unsubscribe: () => void } | null>(null);
+    const balanceRefreshTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null);
     const { client, common } = useStore() ?? {};
 
     const { currentLang } = useTranslations();
@@ -116,11 +117,57 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
         };
     }, [client, common]);
 
+    const applyLiveBalance = useCallback(
+        (balance: number, currency?: string, loginid?: string) => {
+            if (!client || !Number.isFinite(balance)) return;
+
+            const activeLoginId = loginid || client.loginid || activeLoginid;
+            const activeCurrency = currency || client.currency;
+            client.setBalance(balance.toString());
+
+            if (activeCurrency) client.setCurrency(activeCurrency);
+            if (activeLoginId) {
+                updateAuthBalance(activeLoginId, balance, activeCurrency);
+                DerivWSAccountsService.updateStoredAccountBalance(activeLoginId, balance, activeCurrency);
+            }
+        },
+        [activeLoginid, client]
+    );
+
+    const refreshLiveBalance = useCallback(() => {
+        if (!api_base.api || !client) return;
+        if (balanceRefreshTimer.current) window.clearTimeout(balanceRefreshTimer.current);
+
+        balanceRefreshTimer.current = window.setTimeout(() => {
+            balanceRefreshTimer.current = null;
+            void api_base.api
+                ?.balance()
+                .then(response => {
+                    const balance = response?.balance;
+                    if (balance && typeof balance.balance === 'number') {
+                        applyLiveBalance(balance.balance, balance.currency, balance.loginid);
+                    }
+                })
+                .catch(error => {
+                    console.warn('[CoreStoreProvider] Failed to refresh live balance:', error);
+                });
+        }, 250);
+    }, [applyLiveBalance, client]);
+
     const handleMessages = useCallback(
         // Changed parameter type from Record<string, unknown> to unknown to match onMessage signature
         async (res: unknown) => {
             if (!res) return;
-            const data = (res as Record<string, unknown>).data as TSocketResponseData<'balance'>;
+            const data = (res as Record<string, unknown>).data as TSocketResponseData<'balance'> & {
+                buy?: { balance_after?: number | string; currency?: string; loginid?: string };
+                sell?: { balance_after?: number | string; currency?: string; loginid?: string };
+                transaction?: {
+                    action?: string;
+                    balance_after?: number | string;
+                    currency?: string;
+                    loginid?: string;
+                };
+            };
             const { msg_type, error } = data;
 
             // Handle auth errors by calling client.logout() directly instead of useLogout hook
@@ -139,21 +186,29 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
             if (msg_type === 'balance' && data && !error) {
                 const balance = data.balance;
                 if (balance && typeof balance.balance === 'number') {
-                    const loginid = balance.loginid || client.loginid || activeLoginid;
-                    const currency = balance.currency || client.currency;
-                    client.setBalance(balance.balance.toString());
-
-                    if (currency) client.setCurrency(currency);
-                    if (loginid) {
-                        updateAuthBalance(loginid, balance.balance, currency);
-                        DerivWSAccountsService.updateStoredAccountBalance(loginid, balance.balance, currency);
-                    }
+                    applyLiveBalance(balance.balance, balance.currency, balance.loginid);
                 }
+            }
+
+            const tradeBalance =
+                data.transaction?.balance_after ??
+                data.buy?.balance_after ??
+                data.sell?.balance_after;
+            const parsedTradeBalance = Number(tradeBalance);
+
+            if (!error && Number.isFinite(parsedTradeBalance)) {
+                applyLiveBalance(
+                    parsedTradeBalance,
+                    data.transaction?.currency || data.buy?.currency || data.sell?.currency,
+                    data.transaction?.loginid || data.buy?.loginid || data.sell?.loginid
+                );
+            } else if (!error && (msg_type === 'transaction' || msg_type === 'buy' || msg_type === 'sell')) {
+                refreshLiveBalance();
             }
         },
         // Fixed memory leak: removed handleLogout from deps as it's not used in function body
         // Only client is actually referenced (line 129), preventing unnecessary re-subscriptions
-        [activeLoginid, client]
+        [applyLiveBalance, refreshLiveBalance]
     );
 
     useEffect(() => {
@@ -168,6 +223,10 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
         return () => {
             if (msg_listener.current) {
                 msg_listener.current.unsubscribe?.();
+            }
+            if (balanceRefreshTimer.current) {
+                window.clearTimeout(balanceRefreshTimer.current);
+                balanceRefreshTimer.current = null;
             }
         };
     }, [connectionStatus, handleMessages, isAuthorizing, isAuthorized, client]);
