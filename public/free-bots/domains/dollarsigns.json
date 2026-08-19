@@ -1,7 +1,7 @@
 {
   "version": 1,
   "site_id": "dollarsigns",
-  "count": 7,
+  "count": 29,
   "bots": [
     {
       "id": "sv-7-38c2c3c4",
@@ -71,6 +71,204 @@
       "emoji": "CUSTOM",
       "priority": 7,
       "encoding": "gzip-base64"
+    },
+    {
+      "id": "gm-v1-ea17607a",
+      "name": "GM V1",
+      "file": "GM V1.xml",
+      "asset": "uploads/dollarsigns/gm-v1-ea17607a.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 8
+    },
+    {
+      "id": "gm-v2-6455476a",
+      "name": "GM V2",
+      "file": "GM V2.xml",
+      "asset": "uploads/dollarsigns/gm-v2-6455476a.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 9
+    },
+    {
+      "id": "agm-v1-59f861e9",
+      "name": "AGM V1",
+      "file": "AGM V1.xml",
+      "asset": "uploads/dollarsigns/agm-v1-59f861e9.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 10
+    },
+    {
+      "id": "the-dollar-king-over-2-over-3-by-ds-85d26c01",
+      "name": "The Dollar King (Over 2 Over 3) By DS",
+      "file": "The Dollar King (Over 2 Over 3) By DS.xml",
+      "asset": "uploads/dollarsigns/the-dollar-king-over-2-over-3-by-ds-85d26c01.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 11
+    },
+    {
+      "id": "rise-and-fall-v2-4b16480a",
+      "name": "Rise And Fall V2",
+      "file": "Rise And Fall V2.xml",
+      "asset": "uploads/dollarsigns/rise-and-fall-v2-4b16480a.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 12
+    },
+    {
+      "id": "dollar-sign-v3-c3bd29cd",
+      "name": "Dollar sign V3",
+      "file": "Dollar sign V3.xml",
+      "asset": "uploads/dollarsigns/dollar-sign-v3-c3bd29cd.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 13
+    },
+    {
+      "id": "dollar-wave-even-odd-speed-bot-by-ds-7a70e30f",
+      "name": "Dollar Wave Even_Odd speed bot By DS",
+      "file": "Dollar Wave Even_Odd speed bot By DS.xml",
+      "asset": "uploads/dollarsigns/dollar-wave-even-odd-speed-bot-by-ds-7a70e30f.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 14
+    },
+    {
+      "id": "wealth-bot-c2138e88",
+      "name": "Wealth bot",
+      "file": "Wealth bot.xml",
+      "asset": "uploads/dollarsigns/wealth-bot-c2138e88.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 15
+    },
+    {
+      "id": "the-bullet-over-3-over-4-recovery-by-ds-3e3b87a8",
+      "name": "The Bullet  Over 3 Over 4 recovery by DS",
+      "file": "The Bullet  Over 3 Over 4 recovery by DS.xml",
+      "asset": "uploads/dollarsigns/the-bullet-over-3-over-4-recovery-by-ds-3e3b87a8.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 16
+    },
+    {
+      "id": "no-loss-bot-bb990bd5",
+      "name": "No loss bot",
+      "file": "No loss bot.xml",
+      "asset": "uploads/dollarsigns/no-loss-bot-bb990bd5.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 17
+    },
+    {
+      "id": "wealth-generator-ed5c93ea",
+      "name": "Wealth Generator",
+      "file": "Wealth Generator.xml",
+      "asset": "uploads/dollarsigns/wealth-generator-ed5c93ea.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 18
+    },
+    {
+      "id": "sv8-9b413758",
+      "name": "Sv8",
+      "file": "Sv8.xml",
+      "asset": "uploads/dollarsigns/sv8-9b413758.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 19
+    },
+    {
+      "id": "accumulators-bot-af6a255f",
+      "name": "Accumulators Bot",
+      "file": "Accumulators Bot.xml",
+      "asset": "uploads/dollarsigns/accumulators-bot-af6a255f.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 20
+    },
+    {
+      "id": "rise-and-fall-king-af2aee33",
+      "name": "Rise and Fall King",
+      "file": "Rise and Fall King.xml",
+      "asset": "uploads/dollarsigns/rise-and-fall-king-af2aee33.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 21
+    },
+    {
+      "id": "nexus-2f358707",
+      "name": "Nexus",
+      "file": "Nexus.xml",
+      "asset": "uploads/dollarsigns/nexus-2f358707.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 22
+    },
+    {
+      "id": "over-2-ai-0c275374",
+      "name": "OVER 2 AI",
+      "file": "OVER 2 AI.xml",
+      "asset": "uploads/dollarsigns/over-2-ai-0c275374.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 23
+    },
+    {
+      "id": "maziwaa-ai-fab99110",
+      "name": "Maziwaa AI",
+      "file": "Maziwaa AI.xml",
+      "asset": "uploads/dollarsigns/maziwaa-ai-fab99110.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 24
+    },
+    {
+      "id": "percentage-auto-even-odd-baa3c8dd",
+      "name": "Percentage Auto Even_Odd",
+      "file": "Percentage Auto Even_Odd.xml",
+      "asset": "uploads/dollarsigns/percentage-auto-even-odd-baa3c8dd.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 25
+    },
+    {
+      "id": "profit-miner-bot-733a0159",
+      "name": "Profit miner bot",
+      "file": "Profit miner bot.xml",
+      "asset": "uploads/dollarsigns/profit-miner-bot-733a0159.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 26
+    },
+    {
+      "id": "ai-under-7-bot-66ed3dc2",
+      "name": "AI Under 7 Bot",
+      "file": "AI Under 7 Bot.xml",
+      "asset": "uploads/dollarsigns/ai-under-7-bot-66ed3dc2.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 27
+    },
+    {
+      "id": "under-8-ai-advanced-cont-915ee2b0",
+      "name": "Under 8 AI advanced Cont",
+      "file": "Under 8 AI advanced Cont.xml",
+      "asset": "uploads/dollarsigns/under-8-ai-advanced-cont-915ee2b0.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 28
+    },
+    {
+      "id": "rise-and-fall-simple-bot-aa7c39a8",
+      "name": "Rise and Fall Simple Bot",
+      "file": "Rise and Fall Simple Bot.xml",
+      "asset": "uploads/dollarsigns/rise-and-fall-simple-bot-aa7c39a8.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 29
     }
   ]
 }
