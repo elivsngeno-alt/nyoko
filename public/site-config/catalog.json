@@ -1,21 +1,65 @@
 {
-  "version": 1,
+  "version": 2,
+  "source": "src/components/premium/site-customization.ts",
   "navigation_catalog": [
-    { "id": "dashboard", "label": "Dashboard", "required": true },
-    { "id": "bot_builder", "label": "Bot Builder" },
-    { "id": "free_bots", "label": "Free Bots" },
-    { "id": "bulk_trader", "label": "Bulk Trader" },
-    { "id": "batch_trader", "label": "Batch Trader" },
-    { "id": "speedbot", "label": "Speed Bot" },
-    { "id": "copy_trading", "label": "Copy Trading" },
-    { "id": "analysis_tools", "label": "Analysis Tool" },
-    { "id": "calculator", "label": "Calculator" }
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "required": true
+    },
+    {
+      "id": "bot_builder",
+      "label": "Bot Builder"
+    },
+    {
+      "id": "free_bots",
+      "label": "Free Bots"
+    },
+    {
+      "id": "auto_trader",
+      "label": "Auto Trades"
+    },
+    {
+      "id": "manual_trading",
+      "label": "Manual Trading"
+    },
+    {
+      "id": "tradingview",
+      "label": "TradingView"
+    },
+    {
+      "id": "bulk_trader",
+      "label": "Bulk Trader"
+    },
+    {
+      "id": "batch_trader",
+      "label": "Batch Trader"
+    },
+    {
+      "id": "speedbot",
+      "label": "Speed Bot"
+    },
+    {
+      "id": "copy_trading",
+      "label": "Copy Trading"
+    },
+    {
+      "id": "analysis_tools",
+      "label": "Analysis Tool"
+    },
+    {
+      "id": "calculator",
+      "label": "Calculator"
+    }
   ],
   "defaults": {
     "navigation": [
       "dashboard",
       "bot_builder",
       "free_bots",
+      "auto_trader",
+      "manual_trading",
+      "tradingview",
       "bulk_trader",
       "batch_trader",
       "speedbot",
