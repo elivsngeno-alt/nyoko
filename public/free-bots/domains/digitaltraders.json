@@ -164,28 +164,28 @@
       "priority": 17
     },
     {
+      "id": "hussein-bot-switcher-copy-5da1093d",
+      "name": "Hussein Bot Switcher - Copy",
+      "file": "Hussein Bot Switcher - Copy.xml",
+      "asset": "uploads/digitaltraders/hussein-bot-switcher-copy-5da1093d.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 18
+    },
+    {
       "id": "percentage-even-odd-bot-copy-f8bcad40",
       "name": "percentage Even Odd Bot - Copy",
       "file": "percentage Even Odd Bot - Copy.xml",
       "asset": "uploads/digitaltraders/percentage-even-odd-bot-copy-f8bcad40.xml",
       "description": "Uploaded custom Blockly strategy.",
       "emoji": "CUSTOM",
-      "priority": 18
+      "priority": 19
     },
     {
       "id": "hussein-v3-copy-944cdf4e",
       "name": "_Hussein V3 - Copy",
       "file": "_Hussein V3 - Copy.xml",
       "asset": "uploads/digitaltraders/hussein-v3-copy-944cdf4e.xml",
-      "description": "Uploaded custom Blockly strategy.",
-      "emoji": "CUSTOM",
-      "priority": 19
-    },
-    {
-      "id": "hussein-bot-switcher-copy-5da1093d",
-      "name": "Hussein Bot Switcher - Copy",
-      "file": "Hussein Bot Switcher - Copy.xml",
-      "asset": "uploads/digitaltraders/hussein-bot-switcher-copy-5da1093d.xml",
       "description": "Uploaded custom Blockly strategy.",
       "emoji": "CUSTOM",
       "priority": 20
@@ -218,28 +218,28 @@
       "priority": 23
     },
     {
-      "id": "the-d3-rise-and-fall-by-mr-duke-a3009c2c",
-      "name": "The-D3. Rise and fall by (MR.DUKE)",
-      "file": "The-D3. Rise and fall by (MR.DUKE).xml",
-      "asset": "uploads/digitaltraders/the-d3-rise-and-fall-by-mr-duke-a3009c2c.xml",
-      "description": "Uploaded custom Blockly strategy.",
-      "emoji": "CUSTOM",
-      "priority": 24
-    },
-    {
       "id": "s26-bot-by-the-villager-copy-5b37e7d7",
       "name": "s26 Bot by The Villager📈📊 - Copy",
       "file": "s26 Bot by The Villager📈📊 - Copy.xml",
       "asset": "uploads/digitaltraders/s26-bot-by-the-villager-copy-5b37e7d7.xml",
       "description": "Uploaded custom Blockly strategy.",
       "emoji": "CUSTOM",
-      "priority": 25
+      "priority": 24
     },
     {
       "id": "underground-idea001-copy-c980588a",
       "name": "Underground idea001 - Copy",
       "file": "Underground idea001 - Copy.xml",
       "asset": "uploads/digitaltraders/underground-idea001-copy-c980588a.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 25
+    },
+    {
+      "id": "the-d3-rise-and-fall-by-mr-duke-a3009c2c",
+      "name": "The-D3. Rise and fall by (MR.DUKE)",
+      "file": "The-D3. Rise and fall by (MR.DUKE).xml",
+      "asset": "uploads/digitaltraders/the-d3-rise-and-fall-by-mr-duke-a3009c2c.xml",
       "description": "Uploaded custom Blockly strategy.",
       "emoji": "CUSTOM",
       "priority": 26
