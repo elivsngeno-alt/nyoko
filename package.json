@@ -7,7 +7,7 @@
     },
     "scripts": {
         "start": "rsbuild dev -o",
-        "build": "rsbuild build",
+        "build": "node scripts/sync-site-customization-catalog.js && rsbuild build",
         "watch": "rsbuild build --watch",
         "serve": "http-server dist -p 8443 -a localhost -o",
         "start:webpack": "webpack serve --open --config webpack.config.js",
@@ -20,6 +20,7 @@
         "prepare": "husky install",
         "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
         "generate:brand-css": "node scripts/generate-brand-css.js",
+        "sync:site-catalog": "node scripts/sync-site-customization-catalog.js",
         "type-check": "tsc --noEmit"
     },
     "dependencies": {
@@ -62,7 +63,7 @@
         "react-joyride": "^2.8.2",
         "react-loadable": "^5.5.0",
         "react-router-dom": "^6.30.4",
-        "react-tiny-popover": "^8.0.4",
+        "react-tiny-popover": "^8.4.0",
         "react-toastify": "^9.1.3",
         "react-transition-group": "^4.4.5",
         "react-virtualized": "^9.22.5",
@@ -116,7 +117,7 @@
         "babel-loader": "^8.1.0",
         "babel-plugin-syntax-dynamic-import": "^6.18.0",
         "copy-webpack-plugin": "^14.0.0",
-        "css-hot-loader": "^1.4.4",
+        "css-hot-loader": "^4.4.0",
         "css-loader": "^7.1.2",
         "eslint": "^8.56.0",
         "eslint-plugin-prettier": "^5.0.0",
@@ -174,7 +175,7 @@
         "sass-embedded-linux-musl-riscv64": "1.85.1",
         "sass-embedded-linux-musl-x64": "1.85.1",
         "sass-embedded-linux-riscv64": "1.85.1",
-        "sass-embedded-linux-x64": "1.85.1",
+        "sass-embedded-linux-x64-gnu": "1.85.1",
         "sass-embedded-win32-arm64": "1.85.1",
         "sass-embedded-win32-ia32": "1.85.1",
         "sass-embedded-win32-x64": "1.85.1"
