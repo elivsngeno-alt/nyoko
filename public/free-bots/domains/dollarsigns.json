@@ -1,7 +1,7 @@
 {
   "version": 1,
   "site_id": "dollarsigns",
-  "count": 6,
+  "count": 8,
   "bots": [
     {
       "id": "sv-7-38c2c3c4",
@@ -61,6 +61,24 @@
       "emoji": "CUSTOM",
       "priority": 6,
       "encoding": "gzip-base64"
+    },
+    {
+      "id": "auto-c4-volt-e6a1d9f6",
+      "name": "Auto C4 Volt",
+      "file": "Auto C4 Volt.xml",
+      "asset": "uploads/dollarsigns/auto-c4-volt-e6a1d9f6.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 7
+    },
+    {
+      "id": "speed-4-robot-0481c6b9",
+      "name": "SPEED 4 robot ",
+      "file": "SPEED 4 robot .xml",
+      "asset": "uploads/dollarsigns/speed-4-robot-0481c6b9.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 8
     }
   ]
 }
