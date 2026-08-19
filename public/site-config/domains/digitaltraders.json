@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "site_id": "digitaltraders",
+  "navigation": [
+    "dashboard",
+    "bot_builder",
+    "free_bots",
+    "auto_trader",
+    "manual_trading",
+    "tradingview",
+    "bulk_trader",
+    "batch_trader",
+    "speedbot",
+    "copy_trading",
+    "analysis_tools",
+    "calculator"
+  ],
+  "colors": {
+    "primary": "#12d396",
+    "secondary": "#19cba3",
+    "nav_background": "#000000",
+    "nav_text": "#f0f0f0",
+    "header_background": "#ffffff"
+  }
+}
