@@ -1,0 +1,311 @@
+{
+  "version": 1,
+  "site_id": "digitaltraders",
+  "count": 33,
+  "bots": [
+    {
+      "id": "speedhack-mrduke",
+      "name": "Speedhack by mrduke.site",
+      "file": "Speedhack by mrduke.site.xml",
+      "asset": "uploads/speedhack-by-mrduke-site.xml.gz.b64",
+      "description": "Uploaded Digit Over strategy for Volatility 100 Index.",
+      "emoji": "CUSTOM",
+      "priority": 1,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "wealth-g3-village-trader",
+      "name": "Wealth G3 by The Village Trader",
+      "file": "Wealth G3 by The Village Trader.xml",
+      "asset": "uploads/wealth-g3-by-the-village-trader.xml.gz.b64",
+      "description": "Uploaded Digit Under strategy for Volatility 10 (1s) Index.",
+      "emoji": "CUSTOM",
+      "priority": 2,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "even-odd-killer-village-trader",
+      "name": "Even Odd Killer by The Village Trader",
+      "file": "Even Odd Killer by The Village Trader.xml",
+      "asset": "uploads/even-odd-killer-by-the-village-trader.xml.gz.b64",
+      "description": "Uploaded Even/Odd strategy for Volatility 100 Index.",
+      "emoji": "CUSTOM",
+      "priority": 3,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "grffy-updated-premium",
+      "name": "GRFFY Updated Premium Bot",
+      "file": "grffy upated premium bot.xml",
+      "asset": "uploads/grffy-updated-premium-bot.xml.gz.b64",
+      "description": "Uploaded Over/Under strategy for Volatility 100 Index.",
+      "emoji": "CUSTOM",
+      "priority": 4,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "poverty-destroyer-22",
+      "name": "Poverty Destroyer 22",
+      "file": "Poverty destroyer 22.xml",
+      "asset": "uploads/poverty-destroyer-22.xml.gz.b64",
+      "description": "Uploaded Over/Under strategy for Volatility 50 (1s) Index.",
+      "emoji": "CUSTOM",
+      "priority": 5,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "14-bora-v2",
+      "name": "14 Bora V2",
+      "file": "14 bora v2.xml",
+      "asset": "uploads/14-bora-v2.xml.gz.b64",
+      "description": "Uploaded Matches/Differs strategy for Volatility 30 (1s) Index.",
+      "emoji": "CUSTOM",
+      "priority": 6,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "speed-bot",
+      "name": "Speed Bot",
+      "file": "speed bot.xml",
+      "asset": "uploads/speed-bot.xml.gz.b64",
+      "description": "Uploaded Digit Under / Under 6 signal strategy for Volatility 100 Index.",
+      "emoji": "CUSTOM",
+      "priority": 7,
+      "encoding": "gzip-base64"
+    },
+    {
+      "id": "masterhunter-v1-1-copy-f93c1d2d",
+      "name": "MASTERHUNTER V1 (1) - Copy",
+      "file": "MASTERHUNTER V1 (1) - Copy.xml",
+      "asset": "uploads/digitaltraders/masterhunter-v1-1-copy-f93c1d2d.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 8
+    },
+    {
+      "id": "poveryty-destroyer-sv6-bot-1-1-1-copy-b363de48",
+      "name": "POVERYTY DESTROYER SV6  BOT  (1) (1) (1) - Copy",
+      "file": "POVERYTY DESTROYER SV6  BOT  (1) (1) (1) - Copy.xml",
+      "asset": "uploads/digitaltraders/poveryty-destroyer-sv6-bot-1-1-1-copy-b363de48.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 9
+    },
+    {
+      "id": "auto-dream-v5-by-pk-copy-2906d5bb",
+      "name": "AUTO DREAM V5 [BY PK] 💵 - Copy",
+      "file": "AUTO DREAM V5 [BY PK] 💵 - Copy.xml",
+      "asset": "uploads/digitaltraders/auto-dream-v5-by-pk-copy-2906d5bb.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 10
+    },
+    {
+      "id": "auto-rise-fall-deriv-bot-copy-8764fe67",
+      "name": "AUTO RISE FALL DERIV BOT - Copy",
+      "file": "AUTO RISE FALL DERIV BOT - Copy.xml",
+      "asset": "uploads/digitaltraders/auto-rise-fall-deriv-bot-copy-8764fe67.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 11
+    },
+    {
+      "id": "evenodd-double-loss-bot-1-copy-2cc58273",
+      "name": "EVENODD Double loss Bot  (1) - Copy",
+      "file": "EVENODD Double loss Bot  (1) - Copy.xml",
+      "asset": "uploads/digitaltraders/evenodd-double-loss-bot-1-copy-2cc58273.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 12
+    },
+    {
+      "id": "expert-wager-v3-over-under-with-entry-copy-6ed9e58a",
+      "name": "Expert Wager V3 (Over.under) With Entry - Copy",
+      "file": "Expert Wager V3 (Over.under) With Entry - Copy.xml",
+      "asset": "uploads/digitaltraders/expert-wager-v3-over-under-with-entry-copy-6ed9e58a.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 13
+    },
+    {
+      "id": "360-robot-brand-v2-1-copy-5a3610ce",
+      "name": "360 robot brand v2 (1) - Copy",
+      "file": "360 robot brand v2 (1) - Copy.xml",
+      "asset": "uploads/digitaltraders/360-robot-brand-v2-1-copy-5a3610ce.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 14
+    },
+    {
+      "id": "expert-wager-v3-bot-even-odd-copy-287cb2e8",
+      "name": "Expert wager V3 Bot (Even Odd) - Copy",
+      "file": "Expert wager V3 Bot (Even Odd) - Copy.xml",
+      "asset": "uploads/digitaltraders/expert-wager-v3-bot-even-odd-copy-287cb2e8.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 15
+    },
+    {
+      "id": "wealth-generator-22222-copy-ed3f105c",
+      "name": "Wealth generator 22222 - Copy",
+      "file": "Wealth generator 22222 - Copy.xml",
+      "asset": "uploads/digitaltraders/wealth-generator-22222-copy-ed3f105c.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 16
+    },
+    {
+      "id": "updated-candle-mine-version-copy-f0be5867",
+      "name": "UPDATED CANDLE MINE VERSION - Copy",
+      "file": "UPDATED CANDLE MINE VERSION - Copy.xml",
+      "asset": "uploads/digitaltraders/updated-candle-mine-version-copy-f0be5867.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 17
+    },
+    {
+      "id": "percentage-even-odd-bot-copy-f8bcad40",
+      "name": "percentage Even Odd Bot - Copy",
+      "file": "percentage Even Odd Bot - Copy.xml",
+      "asset": "uploads/digitaltraders/percentage-even-odd-bot-copy-f8bcad40.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 18
+    },
+    {
+      "id": "hussein-v3-copy-944cdf4e",
+      "name": "_Hussein V3 - Copy",
+      "file": "_Hussein V3 - Copy.xml",
+      "asset": "uploads/digitaltraders/hussein-v3-copy-944cdf4e.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 19
+    },
+    {
+      "id": "hussein-bot-switcher-copy-5da1093d",
+      "name": "Hussein Bot Switcher - Copy",
+      "file": "Hussein Bot Switcher - Copy.xml",
+      "asset": "uploads/digitaltraders/hussein-bot-switcher-copy-5da1093d.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 20
+    },
+    {
+      "id": "ccopyy-traddes-copy-c6325801",
+      "name": "ccopyy traddes - Copy",
+      "file": "ccopyy traddes - Copy.xml",
+      "asset": "uploads/digitaltraders/ccopyy-traddes-copy-c6325801.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 21
+    },
+    {
+      "id": "copy-trading-devil-ii-v1-0-copy-44209b55",
+      "name": "COPY TRADING DEVIL ii v1.0 - Copy",
+      "file": "COPY TRADING DEVIL ii v1.0 - Copy.xml",
+      "asset": "uploads/digitaltraders/copy-trading-devil-ii-v1-0-copy-44209b55.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 22
+    },
+    {
+      "id": "black-devil-v1-0-copy-a8dfb37c",
+      "name": "BLACK DEVIL v1.0 - Copy",
+      "file": "BLACK DEVIL v1.0 - Copy.xml",
+      "asset": "uploads/digitaltraders/black-devil-v1-0-copy-a8dfb37c.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 23
+    },
+    {
+      "id": "the-d3-rise-and-fall-by-mr-duke-a3009c2c",
+      "name": "The-D3. Rise and fall by (MR.DUKE)",
+      "file": "The-D3. Rise and fall by (MR.DUKE).xml",
+      "asset": "uploads/digitaltraders/the-d3-rise-and-fall-by-mr-duke-a3009c2c.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 24
+    },
+    {
+      "id": "s26-bot-by-the-villager-copy-5b37e7d7",
+      "name": "s26 Bot by The Villager📈📊 - Copy",
+      "file": "s26 Bot by The Villager📈📊 - Copy.xml",
+      "asset": "uploads/digitaltraders/s26-bot-by-the-villager-copy-5b37e7d7.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 25
+    },
+    {
+      "id": "underground-idea001-copy-c980588a",
+      "name": "Underground idea001 - Copy",
+      "file": "Underground idea001 - Copy.xml",
+      "asset": "uploads/digitaltraders/underground-idea001-copy-c980588a.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 26
+    },
+    {
+      "id": "underground-idea001-0d95210d",
+      "name": "Underground idea001",
+      "file": "Underground idea001.xml",
+      "asset": "uploads/digitaltraders/underground-idea001-0d95210d.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 27
+    },
+    {
+      "id": "underground-idea-copy-54b353d0",
+      "name": "Underground idea - Copy",
+      "file": "Underground idea - Copy.xml",
+      "asset": "uploads/digitaltraders/underground-idea-copy-54b353d0.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 28
+    },
+    {
+      "id": "the-auto-switch-2024-bot-original-version-2-copy-afefecc1",
+      "name": "The Auto Switch 2024 Bot. Original version 🔥 (2) - Copy",
+      "file": "The Auto Switch 2024 Bot. Original version 🔥 (2) - Copy.xml",
+      "asset": "uploads/digitaltraders/the-auto-switch-2024-bot-original-version-2-copy-afefecc1.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 29
+    },
+    {
+      "id": "levyne-over-under-systems-bot-1-copy-5a954016",
+      "name": "Levyne Over_Under Systems📡 Bot📈📊 (1) - Copy",
+      "file": "Levyne Over_Under Systems📡 Bot📈📊 (1) - Copy.xml",
+      "asset": "uploads/digitaltraders/levyne-over-under-systems-bot-1-copy-5a954016.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 30
+    },
+    {
+      "id": "risk-managers-site33-copy-84f94c6f",
+      "name": "Risk managers.site33 - Copy",
+      "file": "Risk managers.site33 - Copy.xml",
+      "asset": "uploads/digitaltraders/risk-managers-site33-copy-84f94c6f.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 31
+    },
+    {
+      "id": "risk-managers-site-copy-b5603490",
+      "name": "Risk managers.site - Copy",
+      "file": "Risk managers.site - Copy.xml",
+      "asset": "uploads/digitaltraders/risk-managers-site-copy-b5603490.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 32
+    },
+    {
+      "id": "v25-bb12-111-copy-078aaf29",
+      "name": "V25 BB12 111 - Copy",
+      "file": "V25 BB12 111 - Copy.xml",
+      "asset": "uploads/digitaltraders/v25-bb12-111-copy-078aaf29.xml",
+      "description": "Uploaded custom Blockly strategy.",
+      "emoji": "CUSTOM",
+      "priority": 33
+    }
+  ]
+}
