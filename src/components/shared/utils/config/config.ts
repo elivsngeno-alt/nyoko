@@ -230,25 +230,34 @@ export const clearCSRFToken = (): void => {
  */
 export const generateOAuthURL = async (prompt?: string) => {
     try {
-        // Preview hosts are not always present in the multi-site registry. Use the
-        // configured default OAuth application so the login buttons still open there.
-  const configuredSite = resolveSiteConfig();
-  const defaultSite = getDefaultSiteConfig();
-  const origin = typeof window !== 'undefined' ? window.location.origin : defaultSite.website_url;
-  const site = configuredSite ?? {
-  ...defaultSite,
-  id: `runtime-${typeof window !== 'undefined' ? window.location.hostname : 'default'}`,
-  website_url: origin,
-  redirect_uri: `${origin}/callback`,
-  client_id: process.env.CLIENT_ID || defaultSite.client_id,
-  };
-  const authBase = brandConfig.platform.auth2_url[site.environment];
+        const configuredSite = resolveSiteConfig();
+        const defaultSite = getDefaultSiteConfig();
+        const origin = typeof window !== 'undefined' ? window.location.origin : defaultSite.website_url;
+        const runtimeClientId =
+            typeof process !== 'undefined' && typeof process.env?.CLIENT_ID === 'string'
+                ? process.env.CLIENT_ID.trim()
+                : '';
+        const runtimeRedirectUri =
+            typeof process !== 'undefined' && typeof process.env?.DERIV_REDIRECT_URI === 'string'
+                ? process.env.DERIV_REDIRECT_URI.trim()
+                : '';
+
+        // OAuth must always return to the exact host the user is currently visiting.
+        // This prevents a stale brand-config URL from sending production users to a
+        // different deployment or to an invalid Deriv route.
+        const site = configuredSite ?? {
+            ...defaultSite,
+            id: `runtime-${typeof window !== 'undefined' ? window.location.hostname : 'default'}`,
+            website_url: origin,
+            redirect_uri: `${origin}/callback`,
+        };
+        const authBase = brandConfig.platform.auth2_url[site.environment];
         if (!authBase) throw new Error(`No Deriv OAuth base URL for ${site.environment}`);
 
-        // Prefer the deployment's configured client ID so every production host uses
-        // the OAuth application registered for the current deployment.
-        const runtimeClientId = typeof process !== 'undefined' ? process.env.CLIENT_ID?.trim() : undefined;
         const clientId = runtimeClientId || site.client_id;
+        if (!clientId) throw new Error('Missing Deriv CLIENT_ID configuration.');
+        const redirectUri = runtimeRedirectUri || site.redirect_uri;
+        if (!redirectUri) throw new Error('Missing Deriv DERIV_REDIRECT_URI configuration.');
 
         const csrfToken = generateCSRFToken();
         const codeVerifier = generateCodeVerifier();
@@ -262,7 +271,7 @@ export const generateOAuthURL = async (prompt?: string) => {
         const oauthUrl = new URL('auth', authBase);
         oauthUrl.searchParams.set('response_type', 'code');
         oauthUrl.searchParams.set('client_id', clientId);
-        oauthUrl.searchParams.set('redirect_uri', site.redirect_uri);
+        oauthUrl.searchParams.set('redirect_uri', redirectUri);
         oauthUrl.searchParams.set('scope', site.scopes.join(' '));
         oauthUrl.searchParams.set('state', csrfToken);
         oauthUrl.searchParams.set('code_challenge', codeChallenge);
