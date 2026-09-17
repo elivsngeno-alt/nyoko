@@ -1,7 +1,7 @@
 import { DerivWSAccountsService } from '@/services/derivws-accounts.service';
 import { OAuthTokenExchangeService } from '@/services/oauth-token-exchange.service';
 import {
-    requireCurrentSiteConfig,
+    getDefaultSiteConfig,
     resolveSiteConfig,
 } from '@/config/site-registry';
 import brandConfig from '../../../../../brand.config.json';
@@ -230,8 +230,19 @@ export const clearCSRFToken = (): void => {
  */
 export const generateOAuthURL = async (prompt?: string) => {
     try {
-        const site = requireCurrentSiteConfig();
-        const authBase = brandConfig.platform.auth2_url[site.environment];
+        // Preview hosts are not always present in the multi-site registry. Use the
+        // configured default OAuth application so the login buttons still open there.
+  const configuredSite = resolveSiteConfig();
+  const defaultSite = getDefaultSiteConfig();
+  const origin = typeof window !== 'undefined' ? window.location.origin : defaultSite.website_url;
+  const site = configuredSite ?? {
+  ...defaultSite,
+  id: `runtime-${typeof window !== 'undefined' ? window.location.hostname : 'default'}`,
+  website_url: origin,
+  redirect_uri: `${origin}/callback`,
+  client_id: process.env.CLIENT_ID || defaultSite.client_id,
+  };
+  const authBase = brandConfig.platform.auth2_url[site.environment];
         if (!authBase) throw new Error(`No Deriv OAuth base URL for ${site.environment}`);
 
         const csrfToken = generateCSRFToken();
