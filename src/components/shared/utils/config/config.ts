@@ -237,6 +237,10 @@ export const generateOAuthURL = async (prompt?: string) => {
             typeof process !== 'undefined' && typeof process.env?.CLIENT_ID === 'string'
                 ? process.env.CLIENT_ID.trim()
                 : '';
+        const runtimeRedirectUri =
+            typeof process !== 'undefined' && typeof process.env?.DERIV_REDIRECT_URI === 'string'
+                ? process.env.DERIV_REDIRECT_URI.trim()
+                : '';
 
         // OAuth must always return to the exact host the user is currently visiting.
         // This prevents a stale brand-config URL from sending production users to a
@@ -252,7 +256,8 @@ export const generateOAuthURL = async (prompt?: string) => {
 
         const clientId = runtimeClientId || site.client_id;
         if (!clientId) throw new Error('Missing Deriv CLIENT_ID configuration.');
-        const redirectUri = `${origin}/callback`;
+        const redirectUri = runtimeRedirectUri || site.redirect_uri;
+        if (!redirectUri) throw new Error('Missing Deriv DERIV_REDIRECT_URI configuration.');
 
         const csrfToken = generateCSRFToken();
         const codeVerifier = generateCodeVerifier();
