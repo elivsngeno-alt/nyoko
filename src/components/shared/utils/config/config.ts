@@ -245,6 +245,11 @@ export const generateOAuthURL = async (prompt?: string) => {
   const authBase = brandConfig.platform.auth2_url[site.environment];
         if (!authBase) throw new Error(`No Deriv OAuth base URL for ${site.environment}`);
 
+        // Prefer the deployment's configured client ID so every production host uses
+        // the OAuth application registered for the current deployment.
+        const runtimeClientId = typeof process !== 'undefined' ? process.env.CLIENT_ID?.trim() : undefined;
+        const clientId = runtimeClientId || site.client_id;
+
         const csrfToken = generateCSRFToken();
         const codeVerifier = generateCodeVerifier();
         const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -256,7 +261,7 @@ export const generateOAuthURL = async (prompt?: string) => {
 
         const oauthUrl = new URL('auth', authBase);
         oauthUrl.searchParams.set('response_type', 'code');
-        oauthUrl.searchParams.set('client_id', site.client_id);
+        oauthUrl.searchParams.set('client_id', clientId);
         oauthUrl.searchParams.set('redirect_uri', site.redirect_uri);
         oauthUrl.searchParams.set('scope', site.scopes.join(' '));
         oauthUrl.searchParams.set('state', csrfToken);
