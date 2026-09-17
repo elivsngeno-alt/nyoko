@@ -266,7 +266,9 @@ export const generateOAuthURL = async (prompt?: string) => {
         storeCSRFToken(csrfToken);
         storeCodeVerifier(codeVerifier);
         sessionStorage.setItem('oauth_site_id', site.id);
-        sessionStorage.setItem('oauth_redirect_uri', site.redirect_uri);
+        // Persist the exact runtime redirect URI used in the authorization request.
+        // This must match DERIV_REDIRECT_URI byte-for-byte during token exchange.
+        sessionStorage.setItem('oauth_redirect_uri', redirectUri);
 
         const oauthUrl = new URL('auth', authBase);
         oauthUrl.searchParams.set('response_type', 'code');
