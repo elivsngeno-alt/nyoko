@@ -25,6 +25,16 @@
                 }
             },
             {
+                "id": "elisydolla-vercel",
+                "hosts": ["elisydolla.vercel.app"],
+                "display_domain": "elisydolla.vercel.app",
+                "website_url": "https://elisydolla.vercel.app",
+                "redirect_uri": "https://elisydolla.vercel.app/callback",
+                "client_id": "34675xfHsqnpagJ0dHq28",
+                "scopes": ["trade", "application_read"],
+                "environment": "production"
+            },
+            {
                 "id": "husseinfx",
                 "hosts": ["husseinfx.site", "www.husseinfx.site"],
                 "display_domain": "husseinfx.site",
