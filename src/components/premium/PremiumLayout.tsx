@@ -209,6 +209,7 @@ const PremiumLayout = observer(() => {
             <LandingPage
                 onLogin={() => startOAuth()}
                 onSignup={() => startOAuth('registration')}
+                onApiTokenLogin={() => { setApiTokenError(''); setShowApiTokenLogin(true); }}
                 busy={isAuthorizing || isApiTokenAuthorizing}
             />
             <button
