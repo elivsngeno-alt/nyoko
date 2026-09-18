@@ -48,6 +48,11 @@ const router = createBrowserRouter(
             <Route path='/callback' element={<AppShell />}>
                 <Route index element={<AppRoot />} />
             </Route>
+            {['/features', '/how-it-works', '/free-bots', '/pricing', '/faq', '/login', '/register'].map(path => (
+                <Route path={path} element={<AppShell />} key={path}>
+                    <Route index element={<AppRoot />} />
+                </Route>
+            ))}
         </>
     )
 );
