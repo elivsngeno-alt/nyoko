@@ -12,10 +12,15 @@ type LauncherItem = { icon: string; label: string; section?: PremiumSection; act
 const launcherItems: LauncherItem[] = [
     { icon: '▰', label: 'My computer', action: 'local-file' },
     { icon: '✚', label: 'Bot Builder', section: 'bot_builder' },
-    { icon: '🤖', label: 'Free Bots', section: 'free_bots' },
+    { icon: '◈', label: 'Auto Bots', section: 'auto_trader' },
+    { icon: '◇', label: 'Free Bots', section: 'free_bots' },
+    { icon: '◉', label: 'Manual Trading', section: 'manual_trading' },
     { icon: '▦', label: 'Bulk Trader', section: 'bulk_trader' },
+    { icon: '⌁', label: 'TradingView', section: 'tradingview' },
     { icon: '⇄', label: 'Copy Trading', section: 'copy_trading' },
+    { icon: '↯', label: 'Speed Bot', section: 'speedbot' },
     { icon: '▥', label: 'Analysis Tool', section: 'analysis_tools' },
+    { icon: '＋', label: 'Calculator', section: 'calculator' },
 ];
 
 const DashboardHome = ({ openBotBuilder, openSection }: { openBotBuilder: () => void; openSection?: (section: PremiumSection) => void }) => {
@@ -86,11 +91,19 @@ const DashboardHome = ({ openBotBuilder, openSection }: { openBotBuilder: () => 
                 {launcherItems.map((item,index)=><button key={item.label} onClick={() => launch(item)}><span className={`launcher-icon launcher-icon--${index}`}>{item.icon}</span><strong>{item.label}</strong></button>)}
             </div>
             {error && <div className='prodb-live-error'>{error}</div>}
+            <div className='prodb-risk-card prodb-risk-card--mobile' role='note'>
+                <strong>Trading risk disclaimer</strong>
+                <p>Trading involves risk and you may lose your investment. Test strategies in demo mode first.</p>
+            </div>
         </section>
         <aside className='prodb-help-panel'>
-            <article className='prodb-help-panel__welcome'><div className='prodb-help-line'/><span className='prodb-help-icon'>📣</span><h2>Welcome to {domain}</h2><p>Load bots, build Blockly strategies and use the tools configured for this domain.</p></article>
-            <article className='prodb-help-card prodb-help-card--green'><span>▣</span><div><h3>My computer</h3><p>Load an XML bot with the existing Bot Builder file loader.</p></div></article>
-            <article className='prodb-help-card prodb-help-card--blue'><span>ⓘ</span><div><h3>Bot Builder</h3><p>Blocks, run controls, summary, transactions and journal remain in the Bot Builder workspace.</p></div></article>
+            <article className='prodb-help-panel__welcome'><div className='prodb-help-line'/><span className='prodb-help-icon' aria-hidden='true'>▣</span><h2>Welcome to {domain}</h2><p>Load bots, build Blockly strategies and use the tools configured for this domain.</p></article>
+            <article className='prodb-help-card prodb-help-card--green'><span aria-hidden='true'>▣</span><div><h3>My computer</h3><p>Load an XML bot with the existing Bot Builder file loader.</p></div></article>
+            <article className='prodb-help-card prodb-help-card--blue'><span aria-hidden='true'>ⓘ</span><div><h3>Bot Builder</h3><p>Blocks, run controls, summary, transactions and journal remain in the Bot Builder workspace.</p></div></article>
+            <article className='prodb-risk-card' role='note'>
+                <strong>Trading risk disclaimer</strong>
+                <p>Trading involves risk and you may lose your investment. Use demo mode to test strategies and never trade more than you can afford to lose.</p>
+            </article>
         </aside>
     </div>;
 };
