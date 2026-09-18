@@ -338,6 +338,13 @@
         font-weight: 800 !important;
     }
 
+    .prodb-premium-shell .prodb-bot-builder-host .controls__speed output {
+        min-width: 22px !important;
+        color: #00d9ff !important;
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+    }
+
     .prodb-premium-shell .prodb-bot-builder-host .controls__speed input {
         flex: 1 !important;
         accent-color: #0bb7aa !important;
@@ -364,30 +371,14 @@
         background: rgba(7, 19, 33, .86) !important;
     }
 
-    .prodb-premium-shell .prodb-bot-builder-host .controls__section .animation__container::before {
-        content: 'Slow' !important;
-        margin-right: 22px;
-        color: #d7e2ec;
-        font-size: 12px;
-        font-weight: 800;
-    }
-
-    .prodb-premium-shell .prodb-bot-builder-host .controls__section .animation__container::after {
-        content: 'Fast' !important;
-        margin-left: 10px;
-        color: #d7e2ec;
-        font-size: 12px;
-        font-weight: 800;
-    }
-
     .prodb-premium-shell .prodb-bot-builder-host .controls__section .animation__run-button,
     .prodb-premium-shell .prodb-bot-builder-host .controls__section .animation__stop-button {
         min-width: 132px !important;
         height: 44px !important;
         border: 0 !important;
         border-radius: 12px !important;
-        background: #0bb7aa !important;
-        color: #fff !important;
+        background: #00d9ff !important;
+        color: #031016 !important;
         font-size: 17px !important;
         font-weight: 900 !important;
         box-shadow: 0 6px 16px rgba(0, 183, 170, .25) !important;

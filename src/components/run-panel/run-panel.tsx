@@ -186,13 +186,17 @@ const MobileDrawerFooter = () => {
             <div className='controls__speed' aria-label='Run speed'>
                 <span>Slow</span>
                 <input
-                    aria-label='Run speed slider'
+                    aria-label='Run speed, 0 slow to 100 fast'
+                    aria-valuemax={100}
+                    aria-valuemin={0}
+                    aria-valuenow={runSpeed}
                     max={100}
                     min={0}
                     onChange={event => setRunSpeed(Number(event.target.value))}
                     type='range'
                     value={runSpeed}
                 />
+                <output aria-live='polite'>{runSpeed}</output>
                 <span>Fast</span>
             </div>
             <div className='controls__buttons'>
