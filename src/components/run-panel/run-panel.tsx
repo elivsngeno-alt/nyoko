@@ -179,8 +179,22 @@ const DrawerFooter = ({ is_clear_stat_disabled, onClearStatClick }: TDrawerFoote
 );
 
 const MobileDrawerFooter = () => {
+    const [runSpeed, setRunSpeed] = React.useState(50);
+
     return (
         <div className='controls__section'>
+            <div className='controls__speed' aria-label='Run speed'>
+                <span>Slow</span>
+                <input
+                    aria-label='Run speed slider'
+                    max={100}
+                    min={0}
+                    onChange={event => setRunSpeed(Number(event.target.value))}
+                    type='range'
+                    value={runSpeed}
+                />
+                <span>Fast</span>
+            </div>
             <div className='controls__buttons'>
                 <TradeAnimation className='controls__animation' should_show_overlay />
             </div>

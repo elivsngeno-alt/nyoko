@@ -318,10 +318,30 @@
         z-index: 191 !important;
         min-height: var(--prodb-mobile-run-controls) !important;
         padding: 8px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
         border-top: 1px solid #2a4760 !important;
         border-radius: 18px 18px 0 0 !important;
         background: linear-gradient(110deg, #0a1b2d 0%, #102b43 55%, #09252c 100%) !important;
         box-shadow: 0 -10px 28px rgba(0, 0, 0, .3) !important;
+    }
+
+    .prodb-premium-shell .prodb-bot-builder-host .controls__speed {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: min(100%, 300px) !important;
+        margin: 0 auto !important;
+        color: #d7e2ec !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+    }
+
+    .prodb-premium-shell .prodb-bot-builder-host .controls__speed input {
+        flex: 1 !important;
+        accent-color: #0bb7aa !important;
+        cursor: pointer !important;
     }
 
     /* Native execution controls: keep the real Run/Stop behavior, but arrange
