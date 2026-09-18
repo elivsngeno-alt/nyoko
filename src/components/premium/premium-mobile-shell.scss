@@ -336,16 +336,25 @@
         padding: 8px 12px !important;
     }
 
-    /* Floating helpers sit above the collapsed dock, and disappear while the
-     * Run Panel is expanded so they cannot block its tabs or Reset control. */
+    /* Keep Trade and AI together in a bottom action row on phones. They must
+     * never float along the right edge where they cover page content. */
     .prodb-global-trade {
-        right: 10px;
+        right: auto !important;
+        left: 12px !important;
         bottom: calc(var(--prodb-mobile-trade-dock) + 10px) !important;
-        max-width: calc(100vw - 20px);
+        max-width: calc(100vw - 24px);
+        align-items: flex-start;
     }
 
     .prodb-ai-button {
-        bottom: calc(var(--prodb-mobile-trade-dock) + 14px);
+        right: 12px !important;
+        left: auto !important;
+        bottom: calc(var(--prodb-mobile-trade-dock) + 14px) !important;
+    }
+
+    .prodb-global-trade__panel {
+        max-width: calc(100vw - 24px);
+        max-height: min(62vh, 520px);
     }
 
     .prodb-premium-shell--run-open .prodb-global-trade,
