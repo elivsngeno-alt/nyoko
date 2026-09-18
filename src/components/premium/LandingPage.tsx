@@ -23,6 +23,7 @@ const reviews = [
 interface Props {
     onLogin: () => void;
     onSignup: () => void;
+    onApiTokenLogin: () => void;
     busy?: boolean;
 }
 
@@ -66,6 +67,9 @@ const LandingPage = ({ onLogin, onSignup, busy }: Props) => {
                         </button>
                         <button className='prodb-hero__secondary' onClick={onSignup} disabled={busy}>
                             <BoltIcon /><span>Create Free Account</span>
+                        </button>
+                        <button className='prodb-hero__secondary' onClick={onApiTokenLogin} disabled={busy}>
+                            <span aria-hidden='true'>▣</span><span>Log in with API token</span>
                         </button>
                     </div>
                 </section>
