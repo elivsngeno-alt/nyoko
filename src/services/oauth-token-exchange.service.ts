@@ -119,6 +119,53 @@ export class OAuthTokenExchangeService {
         }
     }
 
+    static async authenticateWithApiToken(apiToken: string): Promise<TokenExchangeResponse> {
+        const token = apiToken.trim();
+        if (!token) return { error: 'invalid_token', error_description: 'Enter a Deriv API token.' };
+
+        let siteId: string;
+        try {
+            siteId = this.getSiteId();
+        } catch (error) {
+            return {
+                error: 'site_not_configured',
+                error_description: error instanceof Error ? error.message : 'This domain is not configured for Deriv authentication.',
+            };
+        }
+
+        try {
+            const { DerivWSAccountsService } = await import('./derivws-accounts.service');
+            const accounts = await DerivWSAccountsService.fetchAccountsList(token);
+            if (!accounts?.length) {
+                return { error: 'no_accounts', error_description: 'No Deriv accounts were returned for this token.' };
+            }
+
+            const firstAccount = accounts[0];
+            const authInfo: AuthInfo = {
+                access_token: token,
+                token_type: 'Bearer',
+                expires_in: 0,
+                expires_at: 0,
+                scope: 'trade',
+                site_id: siteId,
+            };
+            this.storeAuthInfo(authInfo);
+            DerivWSAccountsService.storeAccounts(accounts);
+            localStorage.setItem('active_loginid', firstAccount.account_id);
+            localStorage.setItem('account_type', firstAccount.account_type === 'demo' ? 'demo' : 'real');
+
+            const { api_base } = await import('@/external/bot-skeleton');
+            await api_base.init(true);
+            return { access_token: token, token_type: 'Bearer', scope: 'trade' };
+        } catch (error) {
+            ErrorLogger.error('API token', 'Deriv API token authentication failed', error);
+            return {
+                error: 'invalid_token',
+                error_description: error instanceof Error ? error.message : 'The Deriv API token could not be verified.',
+            };
+        }
+    }
+
     static async exchangeCodeForToken(code: string): Promise<TokenExchangeResponse> {
         const codeVerifier = getCodeVerifier();
         if (!codeVerifier) {
