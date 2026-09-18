@@ -41,7 +41,7 @@ const ReviewCard = ({ item }: { item: string[] }) => (
     </article>
 );
 
-const LandingPage = ({ onLogin, onSignup, busy }: Props) => {
+const LandingPage = ({ onLogin, onSignup, onApiTokenLogin, busy }: Props) => {
     const site = getCurrentSiteConfig();
 
     return (
