@@ -55,4 +55,97 @@
     .prodb-landing__header{height:52px}.prodb-btn{height:32px;min-width:auto;padding:0 10px;font-size:9px}.prodb-hero__pill{font-size:7px;letter-spacing:.4px;padding:6px 8px;overflow:hidden;white-space:nowrap}.prodb-hero h1{font-size:27px}.prodb-hero p{font-size:9px;width:94%}.desktop-only{display:none}.prodb-hero__actions{gap:7px}.prodb-hero__actions button{width:48%;min-width:0;height:40px;padding:0 9px;font-size:9px}.prodb-reviews{bottom:80px}.prodb-landing__footer{height:27px}
     .prodb-app-header .prodb-brand__copy{display:none}.prodb-app-header__flag{display:none}.prodb-user-circle{width:25px;height:25px}.prodb-nav button{padding:0 12px}.prodb-nav button span{font-size:9px}.prodb-premium-content{height:calc(100svh - 52px - 47px - 24px - 39px)}.prodb-launchers{gap:9px}.prodb-launchers button{width:94px}.prodb-bot-grid{grid-template-columns:1fr}.prodb-form-row,.prodb-form-row--three{grid-template-columns:1fr}.prodb-digit-row span{width:42px;height:42px}.prodb-current-tick strong{font-size:34px}.prodb-even-odd{margin-top:20px}.prodb-risk{padding:0 8px;font-size:7px}.prodb-execution{display:none}.prodb-run{height:32px}
 }
+/* Keep the signed-in workspace arranged like the landing experience: a clear
+ * header, horizontal tools rail, focused content surface, and a compact help
+ * column that becomes a stacked section on small screens. */
+.prodb-premium-content {
+    scrollbar-gutter: stable;
+}
+
+.prodb-premium-content > * {
+    width: 100%;
+    max-width: 100%;
+}
+
+.prodb-dashboard-main,
+.prodb-free-bots,
+.prodb-bulk-page {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 820px) {
+    .prodb-premium-content {
+        background: #f4f7f7;
+    }
+
+    .prodb-dashboard-page {
+        min-height: 100%;
+        overflow: visible;
+        background: #f4f7f7;
+    }
+
+    .prodb-dashboard-main {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 20px 14px calc(30px + var(--prodb-mobile-trade-dock, 0px));
+        text-align: left;
+    }
+
+    .prodb-dashboard-main h1 {
+        margin: 0;
+        font-size: 19px;
+        line-height: 1.25;
+    }
+
+    .prodb-dashboard-main p {
+        margin: -8px 0 0;
+        color: #667085;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .prodb-launchers {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        justify-content: stretch;
+    }
+
+    .prodb-launchers button {
+        width: 100%;
+        min-height: 96px;
+        border-radius: 12px;
+        box-shadow: 0 5px 16px rgba(20, 30, 45, .06);
+    }
+
+    .prodb-nav {
+        box-shadow: 0 2px 8px rgba(15, 23, 42, .12);
+    }
+
+    .prodb-nav button {
+        padding-inline: 14px;
+    }
+
+    .prodb-free-bots,
+    .prodb-bulk-page {
+        padding: 18px 14px calc(30px + var(--prodb-mobile-trade-dock, 0px));
+    }
+
+    .prodb-bot-card {
+        min-height: 176px;
+    }
+}
+
+@media (max-width: 540px) {
+    .prodb-dashboard-main h1 {
+        font-size: 18px;
+    }
+
+    .prodb-launchers button {
+        min-height: 92px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) { .prodb-ticker__track,.prodb-reviews__track{animation-duration:120s}.prodb-loader__dots span,.prodb-loader__line span{animation-duration:4s} }

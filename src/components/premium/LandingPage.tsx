@@ -23,7 +23,7 @@ const reviews = [
 interface Props {
     onLogin: () => void;
     onSignup: () => void;
-    onApiTokenLogin: () => void;
+    onApiTokenLogin?: () => void;
     busy?: boolean;
 }
 
@@ -41,7 +41,7 @@ const ReviewCard = ({ item }: { item: string[] }) => (
     </article>
 );
 
-const LandingPage = ({ onLogin, onSignup, onApiTokenLogin, busy }: Props) => {
+const LandingPage = ({ onLogin, onSignup, onApiTokenLogin = () => undefined, busy }: Props) => {
     const site = getCurrentSiteConfig();
 
     return (
