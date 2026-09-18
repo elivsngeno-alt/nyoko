@@ -83,6 +83,10 @@ const PremiumLayout = observer(() => {
     const customization = useSiteCustomization();
     const [section, setSection] = useState<PremiumSection>(() => sectionFromHash(location.hash));
     const [, setAuthProbe] = useState(0);
+    const [showApiTokenLogin, setShowApiTokenLogin] = useState(false);
+    const [apiToken, setApiToken] = useState('');
+    const [apiTokenError, setApiTokenError] = useState('');
+    const [isApiTokenAuthorizing, setIsApiTokenAuthorizing] = useState(false);
     const hasBootstrappedSession = useRef(false);
 
     const params = new URLSearchParams(window.location.search);
@@ -148,6 +152,20 @@ const PremiumLayout = observer(() => {
         if (section === 'manual_trading') dashboard?.setActiveTab(DBOT_TABS.MANUAL_TRADING);
     }, [dashboard, isAuthenticated, section]);
 
+    const authenticateWithApiToken = useCallback(async () => {
+        setApiTokenError('');
+        setIsApiTokenAuthorizing(true);
+        const result = await OAuthTokenExchangeService.authenticateWithApiToken(apiToken);
+        setIsApiTokenAuthorizing(false);
+        if (result.error || !result.access_token) {
+            setApiTokenError(result.error_description || 'Unable to verify that Deriv API token.');
+            return;
+        }
+        setApiToken('');
+        setShowApiTokenLogin(false);
+        setAuthProbe(value => value + 1);
+    }, [apiToken]);
+
     const startOAuth = useCallback(async (prompt?: string) => {
         try {
             setIsAuthorizing(true);
@@ -186,7 +204,37 @@ const PremiumLayout = observer(() => {
     }, [changeSection, customization.loaded, customization.navigation, section]);
 
     if (!runtimeAuthenticated && (isOAuthCallback || isAuthorizing || hasStoredAuth)) return <PremiumLoader />;
-    if (!isAuthenticated) return <LandingPage onLogin={() => startOAuth()} onSignup={() => startOAuth('registration')} busy={isAuthorizing} />;
+    if (!isAuthenticated) return (
+        <>
+            <LandingPage
+                onLogin={() => startOAuth()}
+                onSignup={() => startOAuth('registration')}
+                busy={isAuthorizing || isApiTokenAuthorizing}
+            />
+            <button
+                type='button'
+                onClick={() => { setApiTokenError(''); setShowApiTokenLogin(true); }}
+                style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', border: 0, background: 'transparent', color: '#667085', textDecoration: 'underline', cursor: 'pointer', fontSize: 13 }}
+            >
+                Sign in with Deriv API token
+            </button>
+            {showApiTokenLogin && (
+                <div role='dialog' aria-modal='true' aria-labelledby='api-token-title' style={{ position: 'fixed', inset: 0, zIndex: 20, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(9, 16, 29, .72)' }}>
+                    <form onSubmit={event => { event.preventDefault(); void authenticateWithApiToken(); }} style={{ width: 'min(100%, 430px)', padding: 26, borderRadius: 18, background: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
+                        <h2 id='api-token-title' style={{ margin: '0 0 8px', color: '#101828' }}>Sign in with Deriv API token</h2>
+                        <p style={{ margin: '0 0 18px', color: '#667085', lineHeight: 1.5 }}>Paste a Personal Access Token from Deriv. It is used to verify your account and connect your trading session.</p>
+                        <label htmlFor='deriv-api-token' style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#344054' }}>Deriv API token</label>
+                        <input id='deriv-api-token' type='password' autoComplete='off' value={apiToken} onChange={event => setApiToken(event.target.value)} placeholder='Paste your token' required style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', border: '1px solid #d0d5dd', borderRadius: 10, fontSize: 16 }} />
+                        {apiTokenError && <p role='alert' style={{ margin: '10px 0 0', color: '#b42318' }}>{apiTokenError}</p>}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+                            <button type='button' onClick={() => setShowApiTokenLogin(false)} disabled={isApiTokenAuthorizing} style={{ padding: '11px 16px', border: '1px solid #d0d5dd', borderRadius: 10, background: '#fff', cursor: 'pointer' }}>Cancel</button>
+                            <button type='submit' disabled={isApiTokenAuthorizing || !apiToken.trim()} style={{ padding: '11px 16px', border: 0, borderRadius: 10, background: '#12b76a', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>{isApiTokenAuthorizing ? 'Connecting...' : 'Connect account'}</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+        </>
+    );
 
     const openBotBuilder = () => changeSection('bot_builder');
     const renderSection = () => {
