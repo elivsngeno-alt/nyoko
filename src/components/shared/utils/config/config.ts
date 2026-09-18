@@ -251,8 +251,9 @@ export const generateOAuthURL = async (prompt?: string) => {
             website_url: origin,
             redirect_uri: `${origin}/callback`,
         };
-        const authBase = brandConfig.platform.auth2_url[site.environment];
-        if (!authBase) throw new Error(`No Deriv OAuth base URL for ${site.environment}`);
+        // Deriv OAuth authorization must use the official auth host. Do not route
+        // users through the legacy home.deriv.com login page.
+        const authBase = 'https://auth.deriv.com/oauth2/';
 
         const clientId = runtimeClientId || site.client_id;
         if (!clientId) throw new Error('Missing Deriv CLIENT_ID configuration.');
