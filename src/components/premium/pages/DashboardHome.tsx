@@ -12,10 +12,15 @@ type LauncherItem = { icon: string; label: string; section?: PremiumSection; act
 const launcherItems: LauncherItem[] = [
     { icon: '▰', label: 'My computer', action: 'local-file' },
     { icon: '✚', label: 'Bot Builder', section: 'bot_builder' },
-    { icon: '🤖', label: 'Free Bots', section: 'free_bots' },
+    { icon: '◈', label: 'Auto Bots', section: 'auto_trader' },
+    { icon: '◇', label: 'Free Bots', section: 'free_bots' },
+    { icon: '◉', label: 'Manual Trading', section: 'manual_trading' },
     { icon: '▦', label: 'Bulk Trader', section: 'bulk_trader' },
+    { icon: '⌁', label: 'TradingView', section: 'tradingview' },
     { icon: '⇄', label: 'Copy Trading', section: 'copy_trading' },
+    { icon: '↯', label: 'Speed Bot', section: 'speedbot' },
     { icon: '▥', label: 'Analysis Tool', section: 'analysis_tools' },
+    { icon: '＋', label: 'Calculator', section: 'calculator' },
 ];
 
 const DashboardHome = ({ openBotBuilder, openSection }: { openBotBuilder: () => void; openSection?: (section: PremiumSection) => void }) => {
